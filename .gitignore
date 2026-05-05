@@ -1,0 +1,25 @@
+
+
+# dependencies
+frontend/node_modules
+backend/node_modules
+
+# env files
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Next.js build output
+frontend/.next
+frontend/out
+
+# backend build output
+backend/dist
+backend/build
+
+# misc
+.DS_Store
+coverage
