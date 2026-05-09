@@ -45,3 +45,21 @@
 ### Next
 
 - POST /login の実装
+
+## 2026-05-09
+
+### Output
+
+- login 機能の実装
+- logout 機能の実装
+- express-session の導入
+- PostgreSQL セッションストア導入
+- session 型拡張
+
+### Key learning
+
+- session 認証は login の実装だけで終わりではなく、 session への保存・me での確認・logout での破棄まで一連で確認することが重要である。
+
+### Next
+
+- プロジェクト機能の実装
