@@ -25,6 +25,15 @@ type LoginRequestBody = {
     password: string;
 }
 
+type ProjectRequestBody = {
+    projectName: string;
+    description?: string;
+}
+
+type ProjectParams = {
+    projectId: string;
+}
+
 const PostgresStore = connectPgSimple(session);
 
 const pgPool = new Pool({
@@ -70,19 +79,24 @@ app.post("/signup", async (req: Request<{}, {}, SignupRequestBody>, res: Respons
     if (!username || username.trim().length === 0) {
         return res.status(400).json({ message: "ユーザー名が入っていません。" });
     }
+
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    const trimmedUsername = username.trim();
+
     try {
     const existingUser = await prisma.user.findUnique({
-        where: { email }
+        where: { email: trimmedEmail }
     });
     if (existingUser) {
         return res.status(409).json({ message: "このメールアドレスは登録済みです。" });
     }
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(trimmedPassword, 10);
     const newUser = await prisma.user.create({
             data: {
-                email,
+                email: trimmedEmail,
                 passwordHash,
-                username,
+                username: trimmedUsername,
             }
         });
     
@@ -106,14 +120,18 @@ app.post("/login", async (req: Request<{}, {}, LoginRequestBody>, res: Response)
     if (!password || password.trim().length === 0) {
         return res.status(400).json({ message: "パスワードが入っていません。" })
     }
+
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
     try {
         const existingUser = await prisma.user.findUnique({
-            where: { email } 
+            where: { email: trimmedEmail } 
         });
         if (!existingUser) {
             return res.status(401).json({ message: "メールアドレスまたはパスワードが正しくありません。" })
         }
-        const isMatch = await bcrypt.compare(password, existingUser.passwordHash)
+        const isMatch = await bcrypt.compare(trimmedPassword, existingUser.passwordHash)
         if (!isMatch) {
             return res.status(401).json({ message: "メールアドレスまたはパスワードが正しくありません。" })
         }
@@ -157,8 +175,6 @@ app.get("/me", async (req: Request, res: Response) => {
 })
 
 app.post("/logout", (req: Request, res: Response) => {
-    console.log("sessionID:", req.sessionID);
-    console.log("userId:", req.session.userId);
     const userId = req.session.userId;
     if (!userId) {
         return res.status(401).json({ message: "ログインしていません。" });
@@ -170,6 +186,100 @@ app.post("/logout", (req: Request, res: Response) => {
         }
         return res.status(200).json({ message: "ログアウトに成功しました。" })
     })
+})
+
+app.post("/projects", async (req: Request<{}, {}, ProjectRequestBody>, res: Response) => {
+    const userId = req.session.userId;
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" });
+    }
+    const { projectName, description } = req.body;
+    if (!projectName || projectName.trim().length === 0) {
+        return res.status(400).json({ message: "プロジェクト名が入っていません。" })
+    }
+
+    const trimmedProjectName = projectName.trim();
+    const trimmedDescription = description?.trim();
+    try {
+        const newProject = await prisma.project.create({
+        data: {
+            projectName: trimmedProjectName, 
+            ownerId: userId,
+            ...(trimmedDescription ? { description: trimmedDescription } : {})
+            }
+        });
+        return res.status(201).json({
+            message: "プロジェクトの作成に成功しました。",
+            id: newProject.id,
+            projectName: newProject.projectName,
+            description: newProject.description,
+            ownerId: newProject.ownerId,
+        });
+    } catch(e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" })
+    }
+
+})
+
+app.get("/projects", async (req: Request, res: Response) => {
+    const userId = req.session.userId;
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" });
+    }
+    try {
+        const myProjects = await prisma.project.findMany({
+            where: {
+                ownerId: userId,
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        })
+        return res.json({
+            message: "プロジェクトの取得に成功しました。",
+            projects: myProjects
+        })
+    } catch(e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" })
+    }
+    
+
+    
+})
+
+app.get("/projects/:projectId", async (req: Request<ProjectParams>, res: Response) => {
+    const userId = req.session.userId;
+    const projectId = req.params.projectId;
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" })
+    }
+    try {
+        const project = await prisma.project.findUnique({
+            where: {
+                id: projectId
+            }
+        })
+        if (!project) {
+            return res.status(404).json({ message: "プロジェクトが存在しません。" })
+        }
+        if (userId !== project.ownerId) {
+            return res.status(403).json({ message: "プロジェクトを閲覧する権限がありません。" })
+        }
+        return res.json({
+            message: "プロジェクト詳細の取得に成功しました。",
+            id: project.id,
+            projectName: project.projectName,
+            description: project.description,
+            ownerId: project.ownerId,
+            createdAt: project.createdAt,
+        })
+    } catch (e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" })
+    }
+    
 })
 
 app.get("/health", (_req, res) => {
