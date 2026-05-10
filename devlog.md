@@ -63,3 +63,20 @@
 ### Next
 
 - プロジェクト機能の実装
+
+## 2026-05-10
+
+### Output
+
+- Project 作成機能
+- Project 一覧取得機能
+- Project 詳細取得機能
+
+### Key learning
+
+- Project API では、入力値を受け取るだけでなく、session の userId をownerId として使うことで、認証状態と作成データを正しく結びつける必要があることがわかった。
+
+### Next
+
+- Project 更新
+- Project 削除
