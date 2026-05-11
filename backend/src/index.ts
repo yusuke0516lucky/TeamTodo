@@ -13,27 +13,31 @@ declare module "express-session" {
         userId?: string;
     }
 }
-
+//サインアップリクエスト
 type SignupRequestBody = {
     email: string;
     password: string;
     username: string;
 }
-
+//ログインリクエスト
 type LoginRequestBody = {
     email: string;
     password: string;
 }
-
+//プロジェクトリクエスト(ボディ)
 type ProjectRequestBody = {
     projectName: string;
     description?: string;
 }
-
+//プロジェクトリクエスト(パラメータ)
 type ProjectParams = {
     projectId: string;
 }
-
+//プロジェクトアップデート(ボディ)
+type ProjectUpdateRequestBody = {
+    projectName?: string;
+    description?: string | null;
+}
 const PostgresStore = connectPgSimple(session);
 
 const pgPool = new Pool({
@@ -280,6 +284,70 @@ app.get("/projects/:projectId", async (req: Request<ProjectParams>, res: Respons
         return res.status(500).json({ message: "通信に失敗しました。" })
     }
     
+})
+
+app.patch("/projects/:projectId", async (req:Request<ProjectParams, {}, ProjectUpdateRequestBody>, res: Response) => {
+    const userId = req.session.userId;
+    const projectId = req.params.projectId;
+    const { projectName, description } = req.body;
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" });
+    }
+    
+    const hasProjectName = projectName !== undefined;
+    const hasDescription = description !== undefined;
+    
+    if (!hasProjectName && !hasDescription) {
+        return res.status(400).json({ message: "更新項目が未入力です。" })
+    }
+
+    const updateData: ProjectUpdateRequestBody = {};
+
+    if (hasProjectName) {
+        const trimmedProjectName = projectName.trim();
+        if (trimmedProjectName.length === 0) {
+            return res.status(400).json({ message: "プロジェクト名が空です。" });
+        }
+        updateData.projectName = trimmedProjectName;
+    }
+    if (hasDescription) {
+        if (description === null) {
+            updateData.description = null;
+        } else {
+            const trimmedDescription = description.trim();
+            updateData.description = trimmedDescription.length === 0 ? null : trimmedDescription;
+        }
+    }
+    try {
+        const project = await prisma.project.findUnique({
+            where: {
+                id: projectId,
+            }
+        })
+        if (!project) {
+            return res.status(404).json({ message: "プロジェクトが存在しません。" })
+        }
+        if (userId !== project.ownerId) {
+            return res.status(403).json({ message: "プロジェクトを編集する権限がありません。" })
+        }
+        
+        const updatedProject = await prisma.project.update({
+            where: { id: projectId },
+            data: updateData,
+        })
+        return res.json({
+            message: "プロジェクトの更新に成功しました。",
+            id: updatedProject.id,
+            projectName: updatedProject.projectName,
+            description: updatedProject.description,
+            ownerId: updatedProject.ownerId,
+            createdAt: updatedProject.createdAt,
+
+        });
+    } catch(e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" });
+    }
 })
 
 app.get("/health", (_req, res) => {
