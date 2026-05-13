@@ -350,6 +350,40 @@ app.patch("/projects/:projectId", async (req:Request<ProjectParams, {}, ProjectU
     }
 })
 
+app.delete("/projects/:projectId", async(req: Request<ProjectParams>, res: Response) => {
+    const userId = req.session.userId;
+    const projectId = req.params.projectId;
+
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" })
+    }
+
+    try {
+        const project = await prisma.project.findUnique({
+            where: {
+                id: projectId
+            }
+        })
+        if (!project) {
+            return res.status(404).json({ message: "プロジェクトが存在しません。" });
+        }
+        if (userId !== project.ownerId) {
+            return res.status(403).json({ message: "プロジェクトを削除する権限がありません。" })
+        }
+        //トランザクション
+        const [deleteTaskResult, deleteProjectMemberResult, deleteProjectResult] = await prisma.$transaction([
+            prisma.task.deleteMany({ where: { projectId } }),
+            prisma.projectMember.deleteMany({ where: { projectId } }),
+            prisma.project.delete({ where: { id: projectId } }),
+        ])
+        return res.json({ message: "削除に成功しました。", id: deleteProjectResult.id });
+
+    } catch(e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" })
+    }
+})
+
 app.get("/health", (_req, res) => {
     return res.json({ message: "正しく接続できています。" });
 })
