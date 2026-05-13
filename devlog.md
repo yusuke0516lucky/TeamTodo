@@ -69,7 +69,7 @@
 ### Output
 
 - Project 作成機能
-- Project 一覧取得機能
+- Project 一覧取得機能 ※Project閲覧機能は現在owner限定の実装となっている←design.mdと設計違い
 - Project 詳細取得機能
 
 ### Key learning
@@ -94,3 +94,17 @@
 ### Next
 
 - Project 削除
+
+## 2026-05-13
+
+### Output
+
+- Project削除機能
+
+### Key learning
+
+- DELETE API では親データを先に消すのではなく、外部キー制約を意識して子データから順に削除し、それらをトランザクションでまとめる必要があるとわかった。
+
+### Next
+
+- メンバー追加API
