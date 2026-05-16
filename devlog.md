@@ -108,3 +108,19 @@
 ### Next
 
 - メンバー追加API
+
+## 2026-05-16
+
+### Output
+
+- ProjectMember 追加API実装
+- Project 作成時に owner を ProjectMember として同時作成するように修正
+- Project 一覧・詳細取得を owner 基準から ProjectMember 基準に変更した
+
+### Key learning
+
+- Project の認可では、ProjectMember を所属・閲覧権限の基準として扱い、編集・削除など owner 権限とは分けて設計する必要があるとわかった。
+
+### Next
+
+- Task 作成機能
