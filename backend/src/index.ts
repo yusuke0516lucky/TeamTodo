@@ -212,19 +212,29 @@ app.post("/projects", async (req: Request<{}, {}, ProjectRequestBody>, res: Resp
     const trimmedProjectName = projectName.trim();
     const trimmedDescription = description?.trim();
     try {
-        const newProject = await prisma.project.create({
-        data: {
-            projectName: trimmedProjectName, 
-            ownerId: userId,
-            ...(trimmedDescription ? { description: trimmedDescription } : {})
-            }
-        });
+        const result = await prisma.$transaction(async(tx) => {
+            const newProject = await tx.project.create({
+                data: {
+                    projectName: trimmedProjectName,
+                    ownerId: userId,
+                    ...(trimmedDescription ? { description: trimmedDescription } : {})
+                }
+            })
+            const newProjectMember = await tx.projectMember.create({
+                data: {
+                    projectId: newProject.id,
+                    userId
+                }
+            })
+            return { newProject, newProjectMember }
+
+        })
         return res.status(201).json({
             message: "プロジェクトの作成に成功しました。",
-            id: newProject.id,
-            projectName: newProject.projectName,
-            description: newProject.description,
-            ownerId: newProject.ownerId,
+            id: result.newProject.id,
+            projectName: result.newProject.projectName,
+            description: result.newProject.description,
+            ownerId: result.newProject.ownerId,
         });
     } catch(e: unknown) {
         console.error(e);
@@ -418,7 +428,7 @@ app.post("/projects/:projectId/members", async(req: Request<ProjectParams, {}, P
         }
         const addUser = await prisma.user.findUnique({
             where: {
-                id: addUserId
+                id: trimmedAddUserId
             }
         })
         if (!addUser) {
@@ -427,7 +437,7 @@ app.post("/projects/:projectId/members", async(req: Request<ProjectParams, {}, P
         const existingProjectMember = await prisma.projectMember.findUnique({
             where: {
                 userId_projectId: {
-                    userId: addUserId,
+                    userId: trimmedAddUserId,
                     projectId,
                 }
             }
@@ -438,7 +448,7 @@ app.post("/projects/:projectId/members", async(req: Request<ProjectParams, {}, P
         const newProjectMember = await prisma.projectMember.create({
             data: {
                 projectId,
-                userId: addUserId
+                userId: trimmedAddUserId
             }
         })
         return res.status(201).json({
