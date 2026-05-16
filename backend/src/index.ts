@@ -38,6 +38,11 @@ type ProjectUpdateRequestBody = {
     projectName?: string;
     description?: string | null;
 }
+//プロジェクトメンバーリクエスト(ボディ)
+type ProjectMemberRequestBody = {
+    userId: string
+}
+
 const PostgresStore = connectPgSimple(session);
 
 const pgPool = new Pool({
@@ -72,6 +77,7 @@ app.use(session({
     },
 }));
 
+//認証
 app.post("/signup", async (req: Request<{}, {}, SignupRequestBody>, res: Response) => {
     const { email, password, username } = req.body;
     if (!email || email.trim().length === 0) {
@@ -192,6 +198,7 @@ app.post("/logout", (req: Request, res: Response) => {
     })
 })
 
+//Project機能
 app.post("/projects", async (req: Request<{}, {}, ProjectRequestBody>, res: Response) => {
     const userId = req.session.userId;
     if (!userId) {
@@ -384,6 +391,70 @@ app.delete("/projects/:projectId", async(req: Request<ProjectParams>, res: Respo
     }
 })
 
+//ProjectMember機能
+app.post("/projects/:projectId/members", async(req: Request<ProjectParams, {}, ProjectMemberRequestBody>, res: Response) => {
+    const userId = req.session.userId;
+    const projectId = req.params.projectId;
+    const addUserId = req.body.userId;
+
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" });
+    }
+    if (!addUserId || addUserId.trim().length === 0) {
+        return res.status(400).json({ message: "ユーザーIDが空です。" })
+    }
+    const trimmedAddUserId = addUserId.trim();
+    try {
+        const project = await prisma.project.findUnique({
+            where: {
+                id: projectId
+            }
+        })
+        if (!project) {
+            return res.status(404).json({ message: "プロジェクトが存在しません。" })
+        }
+        if (userId !== project.ownerId) {
+            return res.status(403).json({ message: "プロジェクトメンバーを追加する権限がありません。" })
+        }
+        const addUser = await prisma.user.findUnique({
+            where: {
+                id: addUserId
+            }
+        })
+        if (!addUser) {
+            return res.status(404).json({ message: "追加対象のユーザーが存在しません。" });
+        }
+        const existingProjectMember = await prisma.projectMember.findUnique({
+            where: {
+                userId_projectId: {
+                    userId: addUserId,
+                    projectId,
+                }
+            }
+        })
+        if (existingProjectMember) {
+            return res.status(409).json({ message: "既に参加しています。" })
+        }
+        const newProjectMember = await prisma.projectMember.create({
+            data: {
+                projectId,
+                userId: addUserId
+            }
+        })
+        return res.status(201).json({
+            message: "プロジェクトメンバーの追加に成功しました。",
+            id: newProjectMember.id,
+            userId: newProjectMember.userId,
+            projectId: newProjectMember.projectId
+
+        })
+    } catch(e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" })
+    }
+})
+
+//疎通確認
 app.get("/health", (_req, res) => {
     return res.json({ message: "正しく接続できています。" });
 })
