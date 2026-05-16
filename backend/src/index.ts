@@ -249,17 +249,24 @@ app.get("/projects", async (req: Request, res: Response) => {
         return res.status(401).json({ message: "ログインしていません。" });
     }
     try {
-        const myProjects = await prisma.project.findMany({
+        const projectMemberships = await prisma.projectMember.findMany({
             where: {
-                ownerId: userId,
+                userId
+            },
+            include: {
+                project: true
             },
             orderBy: {
-                createdAt: 'desc',
-            },
+                project: {
+                    createdAt: "desc"
+                }
+            }
+                
         })
+        const projects = projectMemberships.map((membership) => membership.project);
         return res.json({
             message: "プロジェクトの取得に成功しました。",
-            projects: myProjects
+            projects
         })
     } catch(e: unknown) {
         console.error(e);
@@ -285,7 +292,15 @@ app.get("/projects/:projectId", async (req: Request<ProjectParams>, res: Respons
         if (!project) {
             return res.status(404).json({ message: "プロジェクトが存在しません。" })
         }
-        if (userId !== project.ownerId) {
+        const projectMember = await prisma.projectMember.findUnique({
+            where: {
+                userId_projectId: {
+                    userId,
+                    projectId
+                }
+            }
+        })
+        if (!projectMember) {
             return res.status(403).json({ message: "プロジェクトを閲覧する権限がありません。" })
         }
         return res.json({
