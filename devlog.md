@@ -124,3 +124,17 @@
 ### Next
 
 - Task 作成機能
+
+## 2026-05-17
+
+### Output
+
+- Task 作成機能
+
+### Key learning
+
+- Task 作成者は User ではなく ProjectMember を参照するため、担当者設定では User.id ではなく ProjectMember.id を使い、対象 Project に所属しているかを確認する必要があるとわかった。
+
+### Next
+
+- Task 一覧取得機能
