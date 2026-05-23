@@ -48,6 +48,11 @@ type TaskRequestBody = {
     description?: string;
     assigneeProjectMemberId?: string;
 }
+//タスクリクエスト(パラメータ)
+type TaskParams = {
+    projectId: string;
+    taskId: string;
+}
 
 const PostgresStore = connectPgSimple(session);
 
@@ -599,6 +604,58 @@ app.get("/projects/:projectId/tasks", async(req: Request<ProjectParams>, res: Re
         return res.json({
             message: "タスクの取得に成功しました。",
             tasks
+        })
+    } catch (e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" })
+    }
+})
+
+app.get("/projects/:projectId/tasks/:taskId", async(req: Request<TaskParams>, res: Response) => {
+    const userId = req.session.userId;
+    const { projectId, taskId } = req.params;
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" })
+    }
+    try {
+        const project = await prisma.project.findUnique({
+            where: {
+                id: projectId
+            }
+        })
+        if (!project) {
+            return res.status(404).json({ message: "プロジェクトが存在しません。" })
+        }
+        const projectMember = await prisma.projectMember.findUnique({
+            where: {
+                userId_projectId: {
+                    userId,
+                    projectId
+                }
+            }
+        })
+        if (!projectMember) {
+            return res.status(403).json({ message: "タスクを閲覧する権限がありません。" })
+        }
+        const task = await prisma.task.findFirst({
+            where: {
+                id: taskId,
+                projectId
+            }
+        })
+        if (!task) {
+            return res.status(404).json({ message: "タスクが存在しません。" })
+        }
+        return res.json({
+            message: "タスク詳細の取得に成功しました。",
+            id: task.id,
+            title: task.title,
+            description: task.description,
+            status: task.status,
+            projectId: task.projectId,
+            createdBy: task.createdBy,
+            assigneeProjectMemberId: task.assigneeProjectMemberId,
+            createdAt: task.createdAt
         })
     } catch (e: unknown) {
         console.error(e);
