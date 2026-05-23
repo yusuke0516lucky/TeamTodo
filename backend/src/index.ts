@@ -561,6 +561,51 @@ app.post("/projects/:projectId/tasks", async(req: Request<ProjectParams, {}, Tas
     }
 })
 
+app.get("/projects/:projectId/tasks", async(req: Request<ProjectParams>, res: Response) => {
+    const userId = req.session.userId;
+    const projectId = req.params.projectId;
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" })
+    }
+
+    try {
+        const project = await prisma.project.findUnique({
+            where: {
+                id: projectId
+            }
+        })
+        if (!project) {
+            return res.status(404).json({ message: "プロジェクトが存在しません。" })
+        }
+        const projectMember = await prisma.projectMember.findUnique({
+            where: {
+                userId_projectId: {
+                    userId,
+                    projectId
+                }
+            }
+        })
+        if (!projectMember) {
+            return res.status(403).json({ message: "タスクを閲覧する権限がありません。" })
+        }
+        const tasks = await prisma.task.findMany({
+            where: {
+                projectId
+            },
+            orderBy: {
+                createdAt: "desc"
+            }
+        })
+        return res.json({
+            message: "タスクの取得に成功しました。",
+            tasks
+        })
+    } catch (e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" })
+    }
+})
+
 //疎通確認
 app.get("/health", (_req, res) => {
     return res.json({ message: "正しく接続できています。" });
