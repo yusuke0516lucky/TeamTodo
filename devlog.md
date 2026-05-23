@@ -138,3 +138,18 @@
 ### Next
 
 - Task 一覧取得機能
+
+## 2026-05-23
+
+### Output
+
+- Task 一覧取得機能
+- Task 詳細取得機能
+
+### Key learning
+
+- Task 閲覧形APIでは、owner かどうかではなく ProjectMember として対象 Project に所属しているかを確認し、詳細取得では taskId だけでなく projectId も含めることで、別 Project の Task を謝って取得しないようにする必要があるとわかった
+
+### Next
+
+- Task 更新機能
