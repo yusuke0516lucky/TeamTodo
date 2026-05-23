@@ -127,13 +127,60 @@
   - 1つのTaskは1つのProjectに属する
 - ProjectMember と Task (1対多)
   - 1つのProjectMemberが複数のTaskを担当できる
-  - 1つのTaskの担当者は1人のProjectMemberとする
+  - 1つのTaskの担当者は0人または1人のProjectMemberとする
+  - 未担当の場合、TaskのassigneeProjectMemberIdはnullになる
   - Taskは担当者としてProjectMemberを参照する
 - 作成者情報をどこに持つか
   - ProjectがownerIdを持ってUserを参照する
   - Taskの作成者はcreatedByを持ってUserを参照する
 
-## 8. 認証・認可の方針
+## 8. E-R図
+
+```mermaid
+erDiagram
+    User ||--o{ Project : owns
+    User ||--o{ ProjectMember : joins
+    Project ||--o{ ProjectMember : has
+    Project ||--o{ Task : has
+    User ||--o{ Task : creates
+    ProjectMember |o--o{ Task : assigned
+
+    User {
+        string id PK
+        string email
+        string passwordHash
+        string username
+    }
+
+    Project {
+        string id PK
+        string projectName
+        string description
+        string ownerId FK
+        datetime createdAt
+    }
+
+    ProjectMember {
+        string id PK
+        string userId FK
+        string projectId FK
+    }
+
+    Task {
+        string id PK
+        string title
+        string description
+        string status
+        string projectId FK
+        string assigneeProjectMemberId FK
+        string createdBy FK
+        datetime createdAt
+    }
+```
+
+※ `Task.assigneeProjectMemberId` は任意項目です。未担当のタスクの場合は `null` になります。
+
+## 9. 認証・認可の方針
 
 ### 認証
 
@@ -157,7 +204,7 @@
 - タスクステータス更新：タスク担当者
 - 未担当タスク：誰も更新できない
 
-## 9. API案
+## 10. API案
 
 ### 認証系
 
@@ -191,7 +238,7 @@
 | 担当者設定     | PATCH    | /projects/:projectId/tasks/:taskId/assignee |
 | ステータス更新 | PATCH    | /projects/:projectId/tasks/:taskId/status   |
 
-## 10. 技術スタック案
+## 11. 技術スタック案
 
 - フロント：Next.js + TypeScript
 - バックエンド：Node.js + Express + TypeScript
@@ -206,7 +253,7 @@
   - ORM は Prisma を継続して、DB設計とアプリ実装に集中するため
   - 今回は Express と PostgreSQL を優先し、インフラは重くしすぎないため
 
-## 11. 実装の進め方
+## 12. 実装の進め方
 
 ### 実装順（予定）
 
@@ -228,19 +275,19 @@
 - CORS 方針
 - 環境変数の分け方
 
-## 12. 想定される難所
+## 13. 想定される難所
 
 -
 -
 -
 
-## 13. 今後の拡張案
+## 14. 今後の拡張案
 
 -
 -
 -
 
-## 14. メモ
+## 15. メモ
 
 - 設計中に迷ったこと：
 - 後で見直したいこと：
