@@ -53,6 +53,11 @@ type TaskParams = {
     projectId: string;
     taskId: string;
 }
+//タスクアップデート(ボディ)
+type TaskUpdateRequestBody = {
+    title?: string;
+    description?: string | null;
+}
 
 const PostgresStore = connectPgSimple(session);
 
@@ -656,6 +661,78 @@ app.get("/projects/:projectId/tasks/:taskId", async(req: Request<TaskParams>, re
             createdBy: task.createdBy,
             assigneeProjectMemberId: task.assigneeProjectMemberId,
             createdAt: task.createdAt
+        })
+    } catch (e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" })
+    }
+})
+
+app.patch("/projects/:projectId/tasks/:taskId", async(req: Request<TaskParams, {}, TaskUpdateRequestBody>, res: Response) => {
+    const userId = req.session.userId;
+    const { projectId, taskId } = req.params;
+    const { title, description } = req.body;
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" })
+    }
+
+    const hasTitle = title !== undefined;
+    const hasDescription = description !== undefined;
+
+    if (!hasTitle && !hasDescription) {
+        return res.status(400).json({ message: "更新項目が未入力です。" })
+    }
+    const updateData: TaskUpdateRequestBody = {};
+    if (hasTitle) {
+        const trimmedTitle = title.trim();
+        if (trimmedTitle.length === 0) {
+            return res.status(400).json({ message: "タスク名が空です。" })
+        }
+        updateData.title = trimmedTitle;
+    }
+    if (hasDescription) {
+        if (description === null) {
+            updateData.description = null;
+        } else {
+            const trimmedDescription = description.trim();
+            updateData.description = trimmedDescription.length === 0 ? null : trimmedDescription;
+        }
+    }
+    try {
+        const project = await prisma.project.findUnique({
+            where: {
+                id: projectId
+            }
+        })
+        if (!project) {
+            return res.status(404).json({ message: "プロジェクトが存在しません。" })
+        }
+        if (project.ownerId !== userId) {
+            return res.status(403).json({ message: "タスクを編集する権限がありません。" })
+        }
+        const task = await prisma.task.findFirst({
+            where: {
+                id: taskId,
+                projectId
+            }
+        })
+        if (!task) {
+            return res.status(404).json({ message: "タスクが存在しません。" })
+        }
+        const updateTask = await prisma.task.update({
+            where: { id: task.id },
+            data: updateData
+        })
+        return res.status(200).json({
+            message: "タスクの更新に成功しました。",
+            id: updateTask.id,
+            title: updateTask.title,
+            description: updateTask.description,
+            status: updateTask.status,
+            projectId: updateTask.projectId,
+            createdBy: updateTask.createdBy,
+            assigneeProjectMemberId: updateTask.assigneeProjectMemberId,
+            createdAt: updateTask.createdAt
         })
     } catch (e: unknown) {
         console.error(e);
