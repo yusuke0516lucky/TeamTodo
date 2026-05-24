@@ -58,7 +58,10 @@ type TaskUpdateRequestBody = {
     title?: string;
     description?: string | null;
 }
-
+//タスクアサイン(ボディ)
+type TaskAssigneeRequestBody = {
+    assigneeProjectMemberId?: string | null;
+}
 const PostgresStore = connectPgSimple(session);
 
 const pgPool = new Pool({
@@ -776,6 +779,85 @@ app.delete("/projects/:projectId/tasks/:taskId", async(req: Request<TaskParams>,
         return res.status(200).json({
             message: "削除に成功しました。",
             id: deleteTask.id
+        })
+    } catch (e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" })
+    }
+})
+
+app.patch("/projects/:projectId/tasks/:taskId/assignee", async(req: Request<TaskParams, {}, TaskAssigneeRequestBody>, res: Response) => {
+    const userId = req.session.userId;
+    const { projectId, taskId } = req.params;
+    const { assigneeProjectMemberId } = req.body;
+    let assigneeProjectMemberIdForUpdate: string | null;
+
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" });
+    }
+    if (assigneeProjectMemberId === undefined) {
+        return res.status(400).json({ message: "メンバーが指定されていません。" });
+    }
+    if (assigneeProjectMemberId === null) {
+        assigneeProjectMemberIdForUpdate = null;
+    } else  {
+        const trimmedAssigneeProjectMemberId = assigneeProjectMemberId.trim();
+        if (trimmedAssigneeProjectMemberId.length === 0) {
+            return res.status(400).json({ message: "担当者IDが空文字です。" });
+        }
+        assigneeProjectMemberIdForUpdate = trimmedAssigneeProjectMemberId;
+    }
+    try {
+        const project = await prisma.project.findUnique({
+            where: {
+                id: projectId
+            }
+        })
+        if (!project) {
+            return res.status(404).json({ message: "プロジェクトが存在しません。" })
+        }
+        if (project.ownerId !== userId) {
+            return res.status(403).json({ message: "担当者を設定する権限がありません。" });
+        }
+        const task = await prisma.task.findFirst({
+            where: {
+                id: taskId,
+                projectId
+            }
+        })
+        if (!task) {
+            return res.status(404).json({ message: "タスクが存在しません。" });
+        }
+        if (assigneeProjectMemberIdForUpdate !== null) {
+            const projectMember = await prisma.projectMember.findFirst({
+                where: {
+                    id: assigneeProjectMemberIdForUpdate,
+                    projectId
+                }
+            })
+            if (!projectMember) {
+                return res.status(404).json({ message: "プロジェクトメンバーが存在しません。" })
+            }
+        }
+        const updateTask = await prisma.task.update({
+            where: {
+                id: task.id,
+            },
+            data: {
+                assigneeProjectMemberId: assigneeProjectMemberIdForUpdate
+            }
+        })
+        return res.status(200).json({
+             message: "担当者の設定に成功しました。",
+            id: updateTask.id,
+            title: updateTask.title,
+            description: updateTask.description,
+            status: updateTask.status,
+            projectId: updateTask.projectId,
+            createdBy: updateTask.createdBy,
+            assigneeProjectMemberId: updateTask.assigneeProjectMemberId,
+            createdAt: updateTask.createdAt
+
         })
     } catch (e: unknown) {
         console.error(e);
