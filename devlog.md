@@ -153,3 +153,19 @@
 ### Next
 
 - Task 更新機能
+
+## 2026-05-24
+
+### Output
+
+- Task 更新機能
+- Task 削除機能
+- Task 担当者設定機能
+
+### Key learning
+
+- Task 操作では、内容更新・削除・担当者設定ごとに認可条件と検証対象が異なり、owner 権限、taskId + projectId による対象確認、ProjectMember.id による担当者検証をそれぞれ分けて設計する必要があるとわかった。
+
+### Next
+
+- Task ステータス更新機能
