@@ -740,6 +740,49 @@ app.patch("/projects/:projectId/tasks/:taskId", async(req: Request<TaskParams, {
     }
 })
 
+app.delete("/projects/:projectId/tasks/:taskId", async(req: Request<TaskParams>, res: Response) => {
+    const userId = req.session.userId;
+    const { projectId, taskId } = req.params;
+
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" })
+    }
+    try {
+        const project = await prisma.project.findUnique({
+            where: {
+                id: projectId
+            }
+        })
+        if (!project) {
+            return res.status(404).json({ message: "プロジェクトが存在しません。" })
+        }
+        if (project.ownerId !== userId) {
+            return res.status(403).json({ message: "タスクを削除する権限がありません。" });
+        }
+        const task = await prisma.task.findFirst({
+            where: {
+                id: taskId,
+                projectId
+            }
+        })
+        if (!task) {
+            return res.status(404).json({ message: "タスクが存在しません。" })
+        }
+        const deleteTask = await prisma.task.delete({
+            where: {
+                id: task.id
+            }
+        })
+        return res.status(200).json({
+            message: "削除に成功しました。",
+            id: deleteTask.id
+        })
+    } catch (e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" })
+    }
+})
+
 //疎通確認
 app.get("/health", (_req, res) => {
     return res.json({ message: "正しく接続できています。" });
