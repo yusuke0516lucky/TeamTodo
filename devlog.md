@@ -1,4 +1,4 @@
-## YYYY-MM-DD
+## 2026-MM-DD
 
 ### Output
 
@@ -169,3 +169,17 @@
 ### Next
 
 - Task ステータス更新機能
+
+## 2026-05-26
+
+### Output
+
+- Task ステータス更新機能
+
+### Key learning
+
+- owner 権限ではなく Task 担当者本人かどうかで認可し、未担当 Task は誰も更新できないように制御することが重要であるとわかった。
+
+### Next
+
+- Task API 整理
