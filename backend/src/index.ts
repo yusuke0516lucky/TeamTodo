@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { Pool } from "pg";
-
+import { Status } from "./generated/prisma/enums.js";
 
 declare module "express-session" {
     interface SessionData {
@@ -62,6 +62,11 @@ type TaskUpdateRequestBody = {
 type TaskAssigneeRequestBody = {
     assigneeProjectMemberId?: string | null;
 }
+//タスクステータス更新(ボディ)
+type TaskStatusRequestBody = {
+    status: string;
+}
+
 const PostgresStore = connectPgSimple(session);
 
 const pgPool = new Pool({
@@ -863,6 +868,85 @@ app.patch("/projects/:projectId/tasks/:taskId/assignee", async(req: Request<Task
         console.error(e);
         return res.status(500).json({ message: "通信に失敗しました。" })
     }
+})
+
+app.patch("/projects/:projectId/tasks/:taskId/status", async(req: Request<TaskParams, {}, TaskStatusRequestBody>, res: Response) => {
+    const userId = req.session.userId;
+    const { projectId, taskId } = req.params;
+    const { status } = req.body;
+
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" });
+    }
+    if (!status || status.trim().length === 0) {
+        return res.status(400).json({ message: "ステータスが指定されていません。" })
+    }
+    
+    const trimmedStatus = status.trim();
+
+    if (trimmedStatus !== Status.TODO && trimmedStatus !== Status.IN_PROGRESS && trimmedStatus !== Status.DONE) {
+        return res.status(400).json({ message: "ステータスの値が誤っています。" })
+    }
+
+    const statusForUpdate = trimmedStatus as Status; //強制的な型変換
+
+    try {
+        const project = await prisma.project.findUnique({
+            where: {
+                id: projectId
+            }
+        })
+        if (!project) {
+            return res.status(404).json({ message: "プロジェクトが存在しません。" })
+        }
+        const task = await prisma.task.findFirst({
+            where: {
+                id: taskId,
+                projectId
+            }
+        })
+        if (!task) {
+            return res.status(404).json({ message: "タスクが存在しません。" })
+        }
+        if (task.assigneeProjectMemberId === null) {
+            return res.status(403).json({ message: "未担当タスクであるため更新できません。" })
+        }
+        const projectMember = await prisma.projectMember.findFirst({
+            where: {
+                id: task.assigneeProjectMemberId,
+                projectId
+            }
+        })
+        if (!projectMember) {
+            return res.status(404).json({ message: "プロジェクトメンバーが存在しません。" })
+        }
+        if (userId !== projectMember.userId) {
+            return res.status(403).json({ message: "ステータスを更新する権限がありません。" })
+        }
+        const updateTask = await prisma.task.update({
+            where: {
+                id: task.id
+            },
+            data: {
+                status: statusForUpdate
+            }
+        })
+        return res.json({
+            message: "ステータスの更新に成功しました。",
+            id: updateTask.id,
+            title: updateTask.title,
+            description: updateTask.description,
+            status: updateTask.status,
+            projectId: updateTask.projectId,
+            createdBy: updateTask.createdBy,
+            assigneeProjectMemberId: updateTask.assigneeProjectMemberId,
+            createdAt: updateTask.createdAt
+        })
+    } catch (e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" })
+    }
+
 })
 
 //疎通確認
