@@ -217,14 +217,17 @@ erDiagram
 
 ### プロジェクト系
 
-| 機能         | メソッド | URL                          |
-| ------------ | -------- | ---------------------------- |
-| 一覧取得     | GET      | /projects                    |
-| 作成         | POST     | /projects                    |
-| 詳細取得     | GET      | /projects/:projectId         |
-| 更新         | PATCH    | /projects/:projectId         |
-| 削除         | DELETE   | /projects/:projectId         |
-| メンバー追加 | POST     | /projects/:projectId/members |
+| 機能             | メソッド | URL                          |
+| ---------------- | -------- | ---------------------------- |
+| 一覧取得         | GET      | /projects                    |
+| 作成             | POST     | /projects                    |
+| 詳細取得         | GET      | /projects/:projectId         |
+| 更新             | PATCH    | /projects/:projectId         |
+| 削除             | DELETE   | /projects/:projectId         |
+| メンバー一覧取得 | GET      | /projects/:projectId/members |
+| メンバー追加     | POST     | /projects/:projectId/members |
+
+※ メンバー追加は、フロントエンドでは既存ユーザーの email を入力して行う。バックエンド側では、email から User を検索し、見つかった User.id を使って ProjectMember を作成する。
 
 ### タスク系
 
@@ -267,11 +270,92 @@ erDiagram
 8. 認可・UI調整
 9. README / デプロイ準備
 
+<!-- prettier-ignore-start -->
+
+### フロントエンド実装順(予定)
+
+1. API 通信基盤の作成
+  - API ベース URL の整理
+  - fetch 時に credentials: "include" を付ける
+  - 共通 fetch 関数を作るか検討する
+
+2. 認証画面
+  - サインアップ画面
+  - ログイン画面
+  - ログアウト処理
+  - /me によるログイン状態の確認
+
+3. プロジェクト画面
+  - プロジェクト一覧
+  - プロジェクト作成
+  - プロジェクト詳細
+
+4. メンバー追加画面
+  - MVPでは、既存ユーザーの email を入力して ProjectMember を追加する
+  - 招待リンク・ユーザー検索機能は今回実装しない
+
+5. タスク画面
+  - タスク一覧
+  - タスク詳細
+  - タスク作成
+  - タスク内容更新
+  - タスク削除
+
+6. タスク操作
+  - 担当者設定
+  - ステータス更新
+
+7. UI / エラー表示の調整
+  - ローディング表示
+  - バリデーションエラー表示
+  - 401 / 403 / 404 の表示
+
+<!-- prettier-ignore-end -->
+
+### フロントエンド実装時に注意すること
+
+- バックエンドは express-session による Cookie セッションを使う
+- フロントエンドから認証付き API を呼ぶ場合は credentials: "include" を付ける
+- バックエンド側の CORS は credentials: true を設定する
+- 未ログイン時は 401 を受け取り、ログイン画面へ誘導する
+- 権限不足は 403 として扱い、操作不可であることを表示する
+
+### 画面と使用 API の対応
+
+- ログイン画面
+  - POST /login
+  - GET /me
+
+- サインアップ画面
+  - POST /signup
+
+- プロジェクト一覧画面
+  - GET /projects
+  - POST /projects
+
+- プロジェクト詳細画面
+  - GET /projects/:projectId
+  - PATCH /projects/:projectId
+  - DELETE /projects/:projectId
+  - GET /projects/:projectId/tasks
+  - POST /projects/:projectId/tasks
+  - GET /projects/:projectId/members
+  - POST /projects/:projectId/members
+    - body: { email }
+
+- タスク詳細画面
+  - GET /projects/:projectId/tasks/:taskId
+  - PATCH /projects/:projectId/tasks/:taskId
+  - DELETE /projects/:projectId/tasks/:taskId
+  - PATCH /projects/:projectId/tasks/:taskId/assignee
+  - PATCH /projects/:projectId/tasks/:taskId/status
+
 ### 先に決めておくこと
 
 - ディレクトリ作成
 - 認証の責務分担(フロント / バック)
 - APIのベースURL
+- メンバー追加 API 入力方式は userId 直接入力ではなく email 入力に変更する
 - CORS 方針
 - 環境変数の分け方
 
