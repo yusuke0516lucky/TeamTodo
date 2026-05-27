@@ -183,3 +183,19 @@
 ### Next
 
 - Task API 整理
+
+## 2026-05-27
+
+### Output
+
+- Task API の実装状況を整理し、MVP に必要な API が一通り揃っていることを確認した
+- design.md にフロントエンド実装順、画面と API の対応、 Cookie セッション利用時の注意点を追記した
+- メンバー追加は userId 直接入力でなく、既存ユーザーの email を入力して追加する方針に変更した
+
+### Key learning
+
+- バックエンド API が一通り揃ったあとはすぐに画面実装へ進むのではなく、画面と API の対応・入力方式の方針を整理してから進めることが重要であるとわかった。
+
+### Next
+
+- POST /projects/:projectId/members を userId 受け取りから email 受け取りに変更する
