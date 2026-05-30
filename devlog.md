@@ -199,3 +199,19 @@
 ### Next
 
 - POST /projects/:projectId/members を userId 受け取りから email 受け取りに変更する
+
+## 2026-05-30
+
+### Output
+
+- POST /projects/:projectId/members を email 受け取りに変更
+- プロジェクトメンバーリスト一覧機能
+
+### Key learning
+
+- Task 担当者設定で必要になる ProjectMember.id は、User.id とは別物であるため、フロントから利用できるようにメンバー一覧 API で明示的に返す必要がるとわかった。
+
+### Next
+
+- フロントエンド実装前最終確認
+- API 通信基盤の作成
