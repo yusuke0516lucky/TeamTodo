@@ -441,6 +441,71 @@ app.delete("/projects/:projectId", async(req: Request<ProjectParams>, res: Respo
 })
 
 //ProjectMember機能
+app.get("/projects/:projectId/members", async(req: Request<ProjectParams>, res: Response) => {
+    const userId = req.session.userId;
+    const projectId = req.params.projectId;
+
+    if (!userId) {
+        return res.status(401).json({ message: "ログインしていません。" })
+    }
+
+    try {
+        const project = await prisma.project.findUnique({
+            where: {
+                id: projectId
+            }
+        })
+        if (!project) {
+            return res.status(404).json({ message: "プロジェクトが存在しません。" });
+        }
+
+        const currentUserProjectMember = await prisma.projectMember.findUnique({
+            where: {
+                userId_projectId: {
+                    userId,
+                    projectId
+                }
+            }
+        })
+        if (!currentUserProjectMember) {
+            return res.status(403).json({ message: "プロジェクトメンバーを閲覧する権限がありません。" })
+        }
+        const projectMembers = await prisma.projectMember.findMany({
+            where: {
+                projectId
+            },
+            select: {
+                id: true,
+                userId: true,
+
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        username: true,
+                    }
+                }
+            }
+        })
+        const members = projectMembers.map((member) => {
+            return {
+                id: member.id,
+                userId: member.user.id,
+                username: member.user.username,
+                email: member.user.email,
+            }
+        })
+        return res.json({
+            message: "プロジェクトメンバーの取得に成功しました。",
+            members
+        })
+
+    } catch (e: unknown) {
+        console.error(e);
+        return res.status(500).json({ message: "通信に失敗しました。" })
+    }
+})
+
 app.post("/projects/:projectId/members", async(req: Request<ProjectParams, {}, ProjectMemberRequestBody>, res: Response) => {
     const userId = req.session.userId;
     const projectId = req.params.projectId;
