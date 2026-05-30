@@ -40,7 +40,7 @@ type ProjectUpdateRequestBody = {
 }
 //プロジェクトメンバーリクエスト(ボディ)
 type ProjectMemberRequestBody = {
-    userId: string
+    email: string
 }
 //タスクリクエスト(ボディ)
 type TaskRequestBody = {
@@ -444,15 +444,15 @@ app.delete("/projects/:projectId", async(req: Request<ProjectParams>, res: Respo
 app.post("/projects/:projectId/members", async(req: Request<ProjectParams, {}, ProjectMemberRequestBody>, res: Response) => {
     const userId = req.session.userId;
     const projectId = req.params.projectId;
-    const addUserId = req.body.userId;
+    const addUserEmail = req.body.email;
 
     if (!userId) {
         return res.status(401).json({ message: "ログインしていません。" });
     }
-    if (!addUserId || addUserId.trim().length === 0) {
-        return res.status(400).json({ message: "ユーザーIDが空です。" })
+    if (!addUserEmail || addUserEmail.trim().length === 0) {
+        return res.status(400).json({ message: "メールアドレスが空です。" })
     }
-    const trimmedAddUserId = addUserId.trim();
+    const trimmedAddUserEmail = addUserEmail.trim();
     try {
         const project = await prisma.project.findUnique({
             where: {
@@ -467,7 +467,7 @@ app.post("/projects/:projectId/members", async(req: Request<ProjectParams, {}, P
         }
         const addUser = await prisma.user.findUnique({
             where: {
-                id: trimmedAddUserId
+                email: trimmedAddUserEmail
             }
         })
         if (!addUser) {
@@ -476,7 +476,7 @@ app.post("/projects/:projectId/members", async(req: Request<ProjectParams, {}, P
         const existingProjectMember = await prisma.projectMember.findUnique({
             where: {
                 userId_projectId: {
-                    userId: trimmedAddUserId,
+                    userId: addUser.id,
                     projectId,
                 }
             }
@@ -487,7 +487,7 @@ app.post("/projects/:projectId/members", async(req: Request<ProjectParams, {}, P
         const newProjectMember = await prisma.projectMember.create({
             data: {
                 projectId,
-                userId: trimmedAddUserId
+                userId: addUser.id
             }
         })
         return res.status(201).json({
