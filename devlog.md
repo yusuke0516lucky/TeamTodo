@@ -215,3 +215,20 @@
 
 - フロントエンド実装前最終確認
 - API 通信基盤の作成
+
+## 2026-06-06
+
+### Output
+
+- frontend/.env.local に　NEXT_PUBLIC_API_BASE_URL を設定した
+- ログイン画面を作成し、POST /login をフロントから呼び出せるように実装した
+- ログイン成功時に　GET /me を呼び、Cookie セッションが維持されていることを確認した
+- POST /logout を呼び出し、ログアウト後に email, password をクリアする処理を実装した
+
+### Key learning
+
+- フロントエンドから Cookie セッション認証を扱う場合、/login の成功だけで判断せず、credentials: "include" を付けた /me の確認まで行うことで、ログイン状態が正しく保持されているかを検証できると分かった。また、/logout 成功後は user state を null に戻すことで、フロント側のログイン状態も同期できると分かった。
+
+### Next
+
+- POST /signup のフロント実装
