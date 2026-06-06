@@ -42,6 +42,27 @@ export default function LoginPage() {
     return;
   };
 
+  const logout = async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        setError(result.message);
+        return;
+      }
+    } catch {
+      setError("通信に失敗しました。");
+      return;
+    }
+    setUser(null);
+    setEmail("");
+    setPassword("");
+    return;
+  };
+
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
     await login(email, password);
@@ -75,6 +96,7 @@ export default function LoginPage() {
         {error && <p>{error}</p>}
         <button type="submit">ログイン</button>
       </form>
+      {user !== null && <button onClick={logout}>ログアウト</button>}
       {user !== null && (
         <>
           <p>{user.username}</p>
