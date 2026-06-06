@@ -316,7 +316,13 @@ erDiagram
 
 - バックエンドは express-session による Cookie セッションを使う
 - フロントエンドから認証付き API を呼ぶ場合は credentials: "include" を付ける
+- API ベース URL はコードへ直書きせず、環境変数で管理する
+  - ローカル開発: http://localhost:4000
+  - 本番環境: Render のバックエンド URL
 - バックエンド側の CORS は credentials: true を設定する
+- CORS の origin は環境ごとに切り替える
+  - ローカル開発: http://localhost:3000
+  - 本番環境: フロントエンドの本番 URL
 - 未ログイン時は 401 を受け取り、ログイン画面へ誘導する
 - 権限不足は 403 として扱い、操作不可であることを表示する
 
@@ -354,9 +360,13 @@ erDiagram
 
 - ディレクトリ作成
 - 認証の責務分担(フロント / バック)
-- APIのベースURL
+- API のベース URL は環境変数で管理する
+  - ローカル開発: http://localhost:4000
+  - 本番環境: Render のバックエンド URL
 - メンバー追加 API 入力方式は userId 直接入力ではなく email 入力に変更する
 - CORS 方針
+  - ローカル開発では http://localhost:3000 を許可する
+  - 本番環境ではフロントエンドの本番 URL を許可する
 - 環境変数の分け方
 
 ## 13. 想定される難所
