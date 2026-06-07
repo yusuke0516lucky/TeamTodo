@@ -232,3 +232,17 @@
 ### Next
 
 - POST /signup のフロント実装
+
+## 2026-06-07
+
+### Output
+
+- サインアップページ frontend/app/signup/page.tsx　の作成
+
+### Key learning
+
+- フロントエンドのサインアップ処理では、フォーム入力を state で管理しPOST /signup の成功・失敗・通信失敗を分けて扱うことで、バックエンド API と画面状態を安全に接続できるとわかった
+
+### Next
+
+- 認証画面整理
