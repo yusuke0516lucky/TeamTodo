@@ -1,5 +1,6 @@
 "use client";
 import { type SubmitEventHandler, useState } from "react";
+import Link from "next/link";
 type LoginUser = {
   id: string;
   email: string;
@@ -15,31 +16,36 @@ export default function LoginPage() {
   const [user, setUser] = useState<LoginUser | null>(null);
 
   const login = async (email: string, password: string) => {
-    const response = await fetch(`${apiBaseUrl}/login`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const result = await response.json();
+    try {
+      const response = await fetch(`${apiBaseUrl}/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const result = await response.json();
 
-    if (!response.ok) {
-      setError(result.message);
+      if (!response.ok) {
+        setError(result.message);
+        return;
+      }
+      setError("");
+      const getMe = await fetch(`${apiBaseUrl}/me`, {
+        method: "GET",
+        credentials: "include",
+      });
+      const getMeJson = await getMe.json();
+      if (!getMe.ok) {
+        setError(getMeJson.message);
+        setUser(null);
+        return;
+      }
+      setUser(getMeJson);
+      return;
+    } catch {
+      setError("通信に失敗しました。");
       return;
     }
-    setError("");
-    const getMe = await fetch(`${apiBaseUrl}/me`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const getMeJson = await getMe.json();
-    if (!getMe.ok) {
-      setError(getMeJson.message);
-      setUser(null);
-      return;
-    }
-    setUser(getMeJson);
-    return;
   };
 
   const logout = async () => {
@@ -60,6 +66,7 @@ export default function LoginPage() {
     setUser(null);
     setEmail("");
     setPassword("");
+    setError("");
     return;
   };
 
@@ -96,6 +103,7 @@ export default function LoginPage() {
         {error && <p>{error}</p>}
         <button type="submit">ログイン</button>
       </form>
+      <Link href="/signup">サインアップ</Link>
       {user !== null && <button onClick={logout}>ログアウト</button>}
       {user !== null && (
         <>

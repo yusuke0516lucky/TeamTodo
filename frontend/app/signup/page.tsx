@@ -1,5 +1,6 @@
 "use client";
 import { type SubmitEventHandler, useState } from "react";
+import Link from "next/link";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -82,6 +83,7 @@ export default function SignupPage() {
         {message && <p>{message}</p>}
         <button type="submit">サインアップ</button>
       </form>
+      <Link href="/login">ログイン</Link>
     </>
   );
 }
