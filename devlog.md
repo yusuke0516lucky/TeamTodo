@@ -246,3 +246,17 @@
 ### Next
 
 - 認証画面整理
+
+## 2026-06-11
+
+### Output
+
+- Project一覧画面
+
+### Key learning
+
+- Project 一覧画面では、GET /projects のレスポンスに合わせて description を string | null、createdAt を string として扱い、loading・error・空配列・一覧表示を分岐することで、API 取得画面の基本構造を作れるとわかった。
+
+### Next
+
+- Project 作成フォーム
