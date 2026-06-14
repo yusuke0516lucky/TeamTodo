@@ -260,3 +260,18 @@
 ### Next
 
 - Project 作成フォーム
+
+## 2026-06-14
+
+### Output
+
+- Project 作成フォームの実装
+- Project 詳細画面の実装
+
+### Key learning
+
+- Next.js App Router の動的ルートでは、URL の projectId を useParams で取得し、string かどうかを確認してから API に渡す必要があるとわかった。
+
+### Next
+
+- Task 一覧を表示する機能
