@@ -275,3 +275,17 @@
 ### Next
 
 - Task 一覧を表示する機能
+
+## 2026-06-15
+
+### Output
+
+- Task 一覧を表示する機能
+
+### Key learning
+
+- Project 詳細ページで Task 一覧を表示する際は、Project 詳細の取得に成功してから Task 一覧を取得し、Project 用と Task 用の loading / error を分けて管理することで、不要な API の呼び出しを避けつつ、取得処理ごとの状態を切り分けが可能になることがわかった。
+
+### Next
+
+- Task 作成フォーム
