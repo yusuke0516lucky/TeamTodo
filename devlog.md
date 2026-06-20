@@ -289,3 +289,17 @@
 ### Next
 
 - Task 作成フォーム
+
+## 2026-06-20
+
+### Output
+
+- Task 作成フォーム
+
+### Key learning
+
+- Task 作成フォームでは、POST /projects/:projectId/tasks の成功時だけ入力欄クリア・成功メッセージ表示・成功メッセージ表示・Task 一覧再取得を行い、creatingTask / createTaskError / createTaskMessage を分けて管理することで、作成処理と一覧取得処理を混同せずに扱えることがわかった
+
+### Next
+
+- Task 詳細取得機能
