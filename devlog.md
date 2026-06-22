@@ -303,3 +303,18 @@
 ### Next
 
 - Task 詳細取得機能
+
+## 2026-06-22
+
+### Output
+
+- Task 詳細取得機能
+- Task 更新機能
+
+### Key learning
+
+- Task 更新フォームでは、GET で取得した Task 情報を画面表示用の task state に入れるだけでなく、編集フォーム用の state にも初期値として反映する必要があるとわかった
+
+### Next
+
+- Task 削除機能
