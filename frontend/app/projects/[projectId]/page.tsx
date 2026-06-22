@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, Fragment, type SubmitEventHandler } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 type Project = {
   id: string;
   projectName: string;
@@ -232,7 +233,11 @@ export default function ProjectDetailPage() {
                               {tasks.map((task) => {
                                 return (
                                   <Fragment key={task.id}>
-                                    <p>{task.title}</p>
+                                    <Link
+                                      href={`/projects/${task.projectId}/tasks/${task.id}`}
+                                    >
+                                      {task.title}
+                                    </Link>
                                     {task.description === null ? (
                                       <p>説明なし</p>
                                     ) : (
