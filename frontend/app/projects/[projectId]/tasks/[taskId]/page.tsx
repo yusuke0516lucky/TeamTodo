@@ -1,5 +1,5 @@
 "use client";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, type SubmitEventHandler } from "react";
 
 type Task = {
@@ -28,9 +28,14 @@ export default function TaskDetailPage() {
   const [updateMessage, setUpdateMessage] = useState("");
   const [updating, setUpdating] = useState(false);
 
+  //削除用state
+  const [deleteError, setDeleteError] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
   const params = useParams();
   const projectId = params.projectId;
   const taskId = params.taskId;
+  const router = useRouter();
 
   useEffect(() => {
     setError("");
@@ -133,6 +138,44 @@ export default function TaskDetailPage() {
       setLoading(false);
     }
   };
+
+  const deleteTask = async () => {
+    setDeleteError("");
+    if (typeof projectId !== "string") {
+      setDeleteError("プロジェクト詳細URLが不正です。");
+      return;
+    }
+    if (typeof taskId !== "string") {
+      setDeleteError("タスク詳細URLが不正です。");
+      return;
+    }
+    const confirmed = window.confirm("本当にこのタスクを削除しますか？");
+    if (!confirmed) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/projects/${projectId}/tasks/${taskId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+      const result = await response.json();
+      if (!response.ok) {
+        setDeleteError(result.message);
+        return;
+      }
+      router.push(`/projects/${projectId}`);
+    } catch {
+      setDeleteError("通信に失敗しました。");
+      return;
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleUpdateTask: SubmitEventHandler<HTMLFormElement> = async (
     event,
   ) => {
@@ -192,6 +235,10 @@ export default function TaskDetailPage() {
                       {updating ? "更新中" : "更新する"}
                     </button>
                   </form>
+                  {deleteError && <p>{deleteError}</p>}
+                  <button onClick={deleteTask} disabled={deleting}>
+                    {deleting ? "削除中" : "削除する"}
+                  </button>
                 </>
               )}
             </>
