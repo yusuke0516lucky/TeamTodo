@@ -318,3 +318,18 @@
 ### Next
 
 - Task 削除機能
+
+## 2026-06-27
+
+### Output
+
+- ProjectMember 一覧
+- ProjectMember 作成フォーム
+
+### Key learning
+
+- ProjectMember 一覧表示とメンバー追加では、User.id ではなく ProjectMember.id を扱う必要があり、追加フォームでは email を送信し、成功後に getMembers(projectId) を再実行することで一覧を最新化できることがわかった
+
+### Next
+
+- Task 担当者設定
