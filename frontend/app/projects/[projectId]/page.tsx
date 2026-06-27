@@ -19,6 +19,12 @@ type Task = {
   assigneeProjectMemberId: string | null;
   createdAt: string;
 };
+type ProjectMember = {
+  id: string;
+  userId: string;
+  username: string;
+  email: string;
+};
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function ProjectDetailPage() {
@@ -39,6 +45,17 @@ export default function ProjectDetailPage() {
   const [createTaskMessage, setCreateTaskMessage] = useState("");
   const [creatingTask, setCreatingTask] = useState(false);
 
+  //メンバー一覧用ステート
+  const [members, setMembers] = useState<ProjectMember[]>([]);
+  const [memberLoading, setMemberLoading] = useState(false);
+  const [memberError, setMemberError] = useState("");
+
+  //メンバー追加用ステート
+  const [memberEmail, setMemberEmail] = useState("");
+  const [addMemberError, setAddMemberError] = useState("");
+  const [addMemberMessage, setAddMemberMessage] = useState("");
+  const [addingMember, setAddingMember] = useState(false);
+
   const params = useParams();
   const projectId = params.projectId;
 
@@ -57,6 +74,7 @@ export default function ProjectDetailPage() {
         return;
       }
       await getTasks(projectId);
+      await getMembers(projectId);
     };
     loadProjectDetail();
   }, [projectId]);
@@ -166,6 +184,80 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const getMembers = async (projectId: string) => {
+    setMemberError("");
+    setMemberLoading(true);
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/projects/${projectId}/members`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+      const result = await response.json();
+      if (!response.ok) {
+        setMemberError(result.message);
+        return;
+      }
+      setMembers(result.members);
+      return;
+    } catch {
+      setMemberError("通信に失敗しました。");
+      return;
+    } finally {
+      setMemberLoading(false);
+    }
+  };
+
+  const addMember = async (memberEmail: string) => {
+    setAddMemberError("");
+    setAddMemberMessage("");
+    if (typeof projectId !== "string") {
+      setAddMemberError("プロジェクト詳細URLが不正です。");
+      return;
+    }
+    const trimmedMemberEmail = memberEmail.trim();
+    if (trimmedMemberEmail.length === 0) {
+      setAddMemberError("メールアドレスが空です。");
+      return;
+    }
+    setAddingMember(true);
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/projects/${projectId}/members`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: trimmedMemberEmail,
+          }),
+        },
+      );
+      const result = await response.json();
+      if (!response.ok) {
+        setAddMemberError(result.message);
+        return;
+      }
+      setMemberEmail("");
+      setAddMemberMessage("メンバーの追加に成功しました。");
+      await getMembers(projectId);
+    } catch {
+      setAddMemberError("通信に失敗しました。");
+      return;
+    } finally {
+      setAddingMember(false);
+    }
+  };
+
+  const handleAddMember: SubmitEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
+    await addMember(memberEmail);
+  };
+
   return (
     <>
       {loading ? (
@@ -190,6 +282,51 @@ export default function ProjectDetailPage() {
                     作成日：
                     {new Date(project.createdAt).toLocaleDateString("ja-JP")}
                   </p>
+                  {memberLoading ? (
+                    <p>メンバー読み込み中...</p>
+                  ) : (
+                    <>
+                      {memberError ? (
+                        <p>{memberError}</p>
+                      ) : (
+                        <>
+                          {members.length === 0 ? (
+                            <p>メンバーが見つかりません。</p>
+                          ) : (
+                            <>
+                              {members.map((member) => {
+                                return (
+                                  <Fragment key={member.id}>
+                                    <p>{member.username}</p>
+                                    <p>{member.email}</p>
+                                    <p>{member.id}</p>
+                                  </Fragment>
+                                );
+                              })}
+                            </>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
+                  <form onSubmit={handleAddMember}>
+                    <div>
+                      <label>メンバーメールアドレス</label>
+                      <input
+                        type="email"
+                        id="memberEmail"
+                        name="memberEmail"
+                        value={memberEmail}
+                        onChange={(e) => setMemberEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    {addMemberError && <p>{addMemberError}</p>}
+                    {addMemberMessage && <p>{addMemberMessage}</p>}
+                    <button type="submit" disabled={addingMember}>
+                      {addingMember ? "追加中..." : "追加する"}
+                    </button>
+                  </form>
                   <form onSubmit={handleCreateTask}>
                     <div>
                       <label>タスクタイトル</label>
