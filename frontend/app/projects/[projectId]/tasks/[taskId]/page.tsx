@@ -13,6 +13,13 @@ type Task = {
   createdAt: string;
 };
 
+type ProjectMember = {
+  id: string;
+  userId: string;
+  username: string;
+  email: string;
+};
+
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function TaskDetailPage() {
@@ -37,6 +44,18 @@ export default function TaskDetailPage() {
   const taskId = params.taskId;
   const router = useRouter();
 
+  //プロジェクトメンバー用state
+  const [members, setMembers] = useState<ProjectMember[]>([]);
+  const [memberLoading, setMemberLoading] = useState(false);
+  const [memberError, setMemberError] = useState("");
+
+  //担当者設定用state
+  const [selectedAssigneeProjectMemberId, setSelectedAssigneeProjectMemberId] =
+    useState("");
+  const [assigneeError, setAssigneeError] = useState("");
+  const [assigneeMessage, setAssigneeMessage] = useState("");
+  const [assigning, setAssigning] = useState(false);
+
   useEffect(() => {
     setError("");
     setTask(null);
@@ -54,6 +73,7 @@ export default function TaskDetailPage() {
         return;
       }
       await getTask(projectId, taskId);
+      getMembers(projectId);
     };
     loadTaskDetail();
   }, [projectId, taskId]);
@@ -130,6 +150,10 @@ export default function TaskDetailPage() {
       setTask(result);
       setEditTitle(result.title);
       setEditDescription(result.description ?? "");
+      setSelectedAssigneeProjectMemberId(
+        result.assigneeProjectMemberId ? result.assigneeProjectMemberId : "",
+      );
+
       return;
     } catch {
       setError("通信に失敗しました。");
@@ -174,6 +198,83 @@ export default function TaskDetailPage() {
     } finally {
       setDeleting(false);
     }
+  };
+
+  const getMembers = async (projectId: string) => {
+    setMemberError("");
+    setMemberLoading(true);
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/projects/${projectId}/members`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+      const result = await response.json();
+      if (!response.ok) {
+        setMemberError(result.message);
+        return;
+      }
+      setMembers(result.members);
+      return;
+    } catch {
+      setMemberError("通信に失敗しました。");
+    } finally {
+      setMemberLoading(false);
+    }
+  };
+
+  const updateAssignee = async (projectId: string, taskId: string) => {
+    setAssigneeError("");
+    setAssigneeMessage("");
+
+    const assigneeProjectMemberId =
+      selectedAssigneeProjectMemberId === ""
+        ? null
+        : selectedAssigneeProjectMemberId;
+    setAssigning(true);
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/projects/${projectId}/tasks/${taskId}/assignee`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            assigneeProjectMemberId,
+          }),
+        },
+      );
+      const result = await response.json();
+      if (!response.ok) {
+        setAssigneeError(result.message);
+        return;
+      }
+      setTask(result);
+      setSelectedAssigneeProjectMemberId(result.assigneeProjectMemberId ?? "");
+      setAssigneeMessage(result.message);
+    } catch {
+      setAssigneeError("通信に失敗しました。");
+      return;
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const handleUpdateAssignee: SubmitEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
+    if (typeof projectId !== "string") {
+      setAssigneeError("プロジェクト詳細URLが不正です。");
+      return;
+    }
+    if (typeof taskId !== "string") {
+      setAssigneeError("タスク詳細URLが不正です。");
+      return;
+    }
+    await updateAssignee(projectId, taskId);
   };
 
   const handleUpdateTask: SubmitEventHandler<HTMLFormElement> = async (
@@ -235,6 +336,53 @@ export default function TaskDetailPage() {
                       {updating ? "更新中" : "更新する"}
                     </button>
                   </form>
+                  {memberLoading ? (
+                    <p>メンバー読み込み中...</p>
+                  ) : (
+                    <>
+                      {memberError ? (
+                        <p>{memberError}</p>
+                      ) : (
+                        <>
+                          {members.length === 0 ? (
+                            <p>メンバーが見つかりません。</p>
+                          ) : (
+                            <form onSubmit={handleUpdateAssignee}>
+                              <div>
+                                <label>担当者</label>
+                                <select
+                                  name="assigneeMember"
+                                  value={selectedAssigneeProjectMemberId}
+                                  onChange={(e) =>
+                                    setSelectedAssigneeProjectMemberId(
+                                      e.target.value,
+                                    )
+                                  }
+                                >
+                                  <option value="">未担当</option>
+                                  {members.map((member) => {
+                                    return (
+                                      <option key={member.id} value={member.id}>
+                                        {member.username} / {member.email}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+
+                              {assigneeError && <p>{assigneeError}</p>}
+                              {assigneeMessage && <p>{assigneeMessage}</p>}
+
+                              <button type="submit" disabled={assigning}>
+                                {assigning ? "設定中" : "担当者を設定する"}
+                              </button>
+                            </form>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
+
                   {deleteError && <p>{deleteError}</p>}
                   <button onClick={deleteTask} disabled={deleting}>
                     {deleting ? "削除中" : "削除する"}
