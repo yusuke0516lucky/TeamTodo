@@ -333,3 +333,17 @@
 ### Next
 
 - Task 担当者設定
+
+## 2026-07-02
+
+### Output
+
+- Task 担当者設定機能
+
+### Key learning
+
+- Task 担当者設定では、担当者として User.id ではなく、ProjectMember.id を送信し、未担当はから文字ではなく null として扱う必要があるとわかった
+
+### Next
+
+- Task ステータス更新機能
