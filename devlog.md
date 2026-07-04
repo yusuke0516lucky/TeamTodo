@@ -347,3 +347,19 @@
 ### Next
 
 - Task ステータス更新機能
+
+## 2026-07-04
+
+### Output
+
+- Task ステータス更新機能
+- Project 更新機能
+- Project 削除機能
+
+### Key learning
+
+- 更新系の処理では、API 成功後に表示用 state とフォーム入力用 state をレスポンス結果で同期する必要があるとわかった。削除処理では、fetch は Express API の URL、router.push は Next.js の画面 URL として分けて考えることが重要だと学んだ
+
+### Next
+
+- UI/エラー表示の最終調整
