@@ -56,6 +56,13 @@ export default function ProjectDetailPage() {
   const [addMemberMessage, setAddMemberMessage] = useState("");
   const [addingMember, setAddingMember] = useState(false);
 
+  //プロジェクト更新用state
+  const [editProjectName, setEditProjectName] = useState("");
+  const [editProjectDescription, setEditProjectDescription] = useState("");
+  const [updateProjectError, setUpdateProjectError] = useState("");
+  const [updateProjectMessage, setUpdateProjectMessage] = useState("");
+  const [updatingProject, setUpdatingProject] = useState(false);
+
   const params = useParams();
   const projectId = params.projectId;
 
@@ -92,6 +99,8 @@ export default function ProjectDetailPage() {
         return false;
       }
       setProject(result);
+      setEditProjectName(result.projectName);
+      setEditProjectDescription(result.description ?? "");
       return true;
     } catch {
       setError("通信に失敗しました。");
@@ -99,6 +108,55 @@ export default function ProjectDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  //プロジェクト更新フォーム
+  const updateProject = async (projectId: string) => {
+    setUpdateProjectError("");
+    setUpdateProjectMessage("");
+    const trimmedEditProjectName = editProjectName.trim();
+
+    if (trimmedEditProjectName.length === 0) {
+      setUpdateProjectError("プロジェクト名が空です。");
+      return;
+    }
+    setUpdatingProject(true);
+    try {
+      const response = await fetch(`${apiBaseUrl}/projects/${projectId}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectName: trimmedEditProjectName,
+          description: editProjectDescription,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        setUpdateProjectError(result.message);
+        return;
+      }
+      setProject(result);
+      setEditProjectName(result.projectName);
+      setEditProjectDescription(result.description ?? "");
+      setUpdateProjectMessage("プロジェクトの更新に成功しました。");
+    } catch {
+      setUpdateProjectError("通信に失敗しました。");
+      return;
+    } finally {
+      setUpdatingProject(false);
+    }
+  };
+
+  const handleUpdateProject: SubmitEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
+    if (typeof projectId !== "string") {
+      setUpdateProjectError("プロジェクト詳細URLが不正です。");
+      return;
+    }
+    await updateProject(projectId);
   };
 
   //タスク作成フォーム
@@ -282,6 +340,40 @@ export default function ProjectDetailPage() {
                     作成日：
                     {new Date(project.createdAt).toLocaleDateString("ja-JP")}
                   </p>
+                  <form onSubmit={handleUpdateProject}>
+                    <div>
+                      <label>プロジェクトタイトル</label>
+                      <input
+                        type="text"
+                        id="editProjectName"
+                        name="editProjectName"
+                        value={editProjectName}
+                        onChange={(e) => setEditProjectName(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label>プロジェクト説明文</label>
+                      <input
+                        type="text"
+                        id="editProjectDescription"
+                        name="editProjectDescription"
+                        value={editProjectDescription}
+                        onChange={(e) =>
+                          setEditProjectDescription(e.target.value)
+                        }
+                      />
+                    </div>
+
+                    {updateProjectError && <p>{updateProjectError}</p>}
+                    {updateProjectMessage && <p>{updateProjectMessage}</p>}
+                    <button type="submit" disabled={updatingProject}>
+                      {updatingProject
+                        ? "プロジェクト更新中..."
+                        : "プロジェクトを更新する"}
+                    </button>
+                  </form>
                   {memberLoading ? (
                     <p>メンバー読み込み中...</p>
                   ) : (
