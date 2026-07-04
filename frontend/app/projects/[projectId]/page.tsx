@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, Fragment, type SubmitEventHandler } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 type Project = {
   id: string;
@@ -63,7 +63,12 @@ export default function ProjectDetailPage() {
   const [updateProjectMessage, setUpdateProjectMessage] = useState("");
   const [updatingProject, setUpdatingProject] = useState(false);
 
+  //プロジェクト削除用state
+  const [deleteProjectError, setDeleteProjectError] = useState("");
+  const [deletingProject, setDeletingProject] = useState(false);
+
   const params = useParams();
+  const router = useRouter();
   const projectId = params.projectId;
 
   useEffect(() => {
@@ -242,6 +247,38 @@ export default function ProjectDetailPage() {
     }
   };
 
+  //プロジェクト削除機能
+  const deleteProject = async () => {
+    setDeleteProjectError("");
+    if (typeof projectId !== "string") {
+      setDeleteProjectError("プロジェクト詳細URLが不正です。");
+      return;
+    }
+    const confirmed = window.confirm("本当にこのプロジェクトを削除しますか？");
+    if (!confirmed) {
+      return;
+    }
+    setDeletingProject(true);
+    try {
+      const response = await fetch(`${apiBaseUrl}/projects/${projectId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        setDeleteProjectError(result.message);
+        return;
+      }
+      router.push(`/projects`);
+    } catch {
+      setDeleteProjectError("通信に失敗しました。");
+      return;
+    } finally {
+      setDeletingProject(false);
+    }
+  };
+
+  //メンバー取得機能
   const getMembers = async (projectId: string) => {
     setMemberError("");
     setMemberLoading(true);
@@ -374,6 +411,12 @@ export default function ProjectDetailPage() {
                         : "プロジェクトを更新する"}
                     </button>
                   </form>
+                  {deleteProjectError && <p>{deleteProjectError}</p>}
+                  <button onClick={deleteProject} disabled={deletingProject}>
+                    {deletingProject
+                      ? "プロジェクトを削除中..."
+                      : "プロジェクトを削除する"}
+                  </button>
                   {memberLoading ? (
                     <p>メンバー読み込み中...</p>
                   ) : (
