@@ -20,6 +20,8 @@ type ProjectMember = {
   email: string;
 };
 
+type Status = "TODO" | "IN_PROGRESS" | "DONE";
+
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function TaskDetailPage() {
@@ -56,6 +58,12 @@ export default function TaskDetailPage() {
   const [assigneeMessage, setAssigneeMessage] = useState("");
   const [assigning, setAssigning] = useState(false);
 
+  //タスクステータス更新用state
+  const [selectedStatus, setSelectedStatus] = useState<Status>("TODO");
+  const [statusError, setStatusError] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
   useEffect(() => {
     setError("");
     setTask(null);
@@ -73,7 +81,7 @@ export default function TaskDetailPage() {
         return;
       }
       await getTask(projectId, taskId);
-      getMembers(projectId);
+      await getMembers(projectId);
     };
     loadTaskDetail();
   }, [projectId, taskId]);
@@ -153,6 +161,7 @@ export default function TaskDetailPage() {
       setSelectedAssigneeProjectMemberId(
         result.assigneeProjectMemberId ? result.assigneeProjectMemberId : "",
       );
+      setSelectedStatus(result.status);
 
       return;
     } catch {
@@ -284,6 +293,54 @@ export default function TaskDetailPage() {
     setUpdateMessage("");
     await updateTask(editTitle, editDescription);
   };
+
+  const updateStatus = async (projectId: string, taskId: string) => {
+    setStatusError("");
+    setStatusMessage("");
+
+    setUpdatingStatus(true);
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/projects/${projectId}/tasks/${taskId}/status`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: selectedStatus,
+          }),
+        },
+      );
+      const result = await response.json();
+      if (!response.ok) {
+        setStatusError(result.message);
+        return;
+      }
+      setTask(result);
+      setSelectedStatus(result.status);
+      setStatusMessage("ステータスの更新に成功しました。");
+    } catch {
+      setStatusError("通信に失敗しました。");
+      return;
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleUpdateStatus: SubmitEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
+    if (typeof projectId !== "string") {
+      setStatusError("プロジェクト詳細URLが不正です。");
+      return;
+    }
+    if (typeof taskId !== "string") {
+      setStatusError("タスク詳細URLが不正です。");
+      return;
+    }
+    await updateStatus(projectId, taskId);
+  };
   return (
     <>
       {loading ? (
@@ -347,42 +404,69 @@ export default function TaskDetailPage() {
                           {members.length === 0 ? (
                             <p>メンバーが見つかりません。</p>
                           ) : (
-                            <form onSubmit={handleUpdateAssignee}>
-                              <div>
-                                <label>担当者</label>
-                                <select
-                                  name="assigneeMember"
-                                  value={selectedAssigneeProjectMemberId}
-                                  onChange={(e) =>
-                                    setSelectedAssigneeProjectMemberId(
-                                      e.target.value,
-                                    )
-                                  }
-                                >
-                                  <option value="">未担当</option>
-                                  {members.map((member) => {
-                                    return (
-                                      <option key={member.id} value={member.id}>
-                                        {member.username} / {member.email}
-                                      </option>
-                                    );
-                                  })}
-                                </select>
-                              </div>
+                            <>
+                              <form onSubmit={handleUpdateAssignee}>
+                                <div>
+                                  <label>担当者</label>
+                                  <select
+                                    name="assigneeMember"
+                                    value={selectedAssigneeProjectMemberId}
+                                    onChange={(e) =>
+                                      setSelectedAssigneeProjectMemberId(
+                                        e.target.value,
+                                      )
+                                    }
+                                  >
+                                    <option value="">未担当</option>
+                                    {members.map((member) => {
+                                      return (
+                                        <option
+                                          key={member.id}
+                                          value={member.id}
+                                        >
+                                          {member.username} / {member.email}
+                                        </option>
+                                      );
+                                    })}
+                                  </select>
+                                </div>
 
-                              {assigneeError && <p>{assigneeError}</p>}
-                              {assigneeMessage && <p>{assigneeMessage}</p>}
+                                {assigneeError && <p>{assigneeError}</p>}
+                                {assigneeMessage && <p>{assigneeMessage}</p>}
 
-                              <button type="submit" disabled={assigning}>
-                                {assigning ? "設定中" : "担当者を設定する"}
-                              </button>
-                            </form>
+                                <button type="submit" disabled={assigning}>
+                                  {assigning ? "設定中" : "担当者を設定する"}
+                                </button>
+                              </form>
+                            </>
                           )}
                         </>
                       )}
                     </>
                   )}
+                  <form onSubmit={handleUpdateStatus}>
+                    <div>
+                      <label>ステータス</label>
+                      <select
+                        name="status"
+                        value={selectedStatus}
+                        onChange={(e) =>
+                          setSelectedStatus(e.target.value as Status)
+                        }
+                      >
+                        <option value="TODO">TODO</option>
+                        <option value="IN_PROGRESS">IN_PROGRESS</option>
+                        <option value="DONE">DONE</option>
+                      </select>
+                    </div>
 
+                    {statusError && <p>{statusError}</p>}
+                    {statusMessage && <p>{statusMessage}</p>}
+
+                    <button type="submit" disabled={updatingStatus}>
+                      {updatingStatus ? "更新中" : "ステータスを更新する"}
+                    </button>
+                  </form>
                   {deleteError && <p>{deleteError}</p>}
                   <button onClick={deleteTask} disabled={deleting}>
                     {deleting ? "削除中" : "削除する"}
