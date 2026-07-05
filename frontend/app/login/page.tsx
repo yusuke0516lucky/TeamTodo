@@ -76,41 +76,74 @@ export default function LoginPage() {
   };
 
   return (
-    <>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>メールアドレス</label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            name="email"
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+    <main className="mx-auto max-w-md space-y-6 px-6 py-8">
+      <section className="space-y-4 rounded border p-5">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">ログイン</h1>
+          <p>メールアドレスとパスワードで TeamTodo にログインします。</p>
         </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block font-medium">メールアドレス</label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              name="email"
+              className="w-full rounded border px-3 py-2"
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-        <div>
-          <label>パスワード</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        {error && <p>{error}</p>}
-        <button type="submit">ログイン</button>
-      </form>
-      <Link href="/signup">サインアップ</Link>
-      {user !== null && <button onClick={logout}>ログアウト</button>}
+          <div>
+            <label className="block font-medium">パスワード</label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              className="w-full rounded border px-3 py-2"
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          {error && (
+            <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
+              {error}
+            </p>
+          )}
+          <button
+            type="submit"
+            className="rounded border px-4 py-2 disabled:opacity-50"
+          >
+            ログイン
+          </button>
+        </form>
+      </section>
+      <p className="text-sm">
+        アカウントをお持ちでない方は
+        <Link href="/signup" className="ml-1 underline">
+          サインアップ
+        </Link>
+      </p>
       {user !== null && (
-        <>
-          <p>{user.username}</p>
-          <p>{user.email}</p>
-        </>
+        <section className="space-y-4 rounded border p-5">
+          <h2 className="text-lg font-semibold">ログイン中のユーザー</h2>
+          <div>
+            <p>{user.username}</p>
+            <p>{user.email}</p>
+          </div>
+          <button
+            onClick={logout}
+            className="rounded border px-4 py-2 disabled:opacity-50"
+          >
+            ログアウト
+          </button>
+          <Link href="/projects" className="inline-block text-sm underline">
+            プロジェクト一覧へ進む
+          </Link>
+        </section>
       )}
-    </>
+    </main>
   );
 }
