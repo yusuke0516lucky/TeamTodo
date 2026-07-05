@@ -342,74 +342,115 @@ export default function TaskDetailPage() {
     await updateStatus(projectId, taskId);
   };
   return (
-    <>
+    <main className="mx-auto max-w-3xl space-y-6 px-6 py-8">
       {loading ? (
-        <p>読み込み中</p>
+        <p className="rounded border p-4">読み込み中</p>
       ) : (
         <>
           {error ? (
-            <p>{error}</p>
+            <p className="rounded border border-red-300 bg-red-50 p-4 font-medium text-red-700">
+              {error}
+            </p>
           ) : (
             <>
               {task === null ? (
-                <p>タスクが見つかりません。</p>
+                <p className="rounded border p-4">タスクが見つかりません。</p>
               ) : (
                 <>
-                  <p>{task.title}</p>
-                  {!task.description ? (
-                    <p>説明なし</p>
-                  ) : (
-                    <p>{task.description}</p>
-                  )}
-                  <p>{task.status}</p>
-                  <p>
-                    作成日：
-                    {new Date(task.createdAt).toLocaleDateString("ja-JP")}
-                  </p>
-                  <form onSubmit={handleUpdateTask}>
-                    <div>
-                      <label>タスクタイトル</label>
-                      <input
-                        type="text"
-                        id="editTitle"
-                        name="editTitle"
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label>説明文</label>
-                      <input
-                        type="text"
-                        id="editDescription"
-                        name="editDescription"
-                        value={editDescription}
-                        onChange={(e) => setEditDescription(e.target.value)}
-                      />
-                    </div>
-                    {updateError && <p>{updateError}</p>}
-                    {updateMessage && <p>{updateMessage}</p>}
-                    <button type="submit" disabled={updating}>
-                      {updating ? "更新中" : "更新する"}
-                    </button>
-                  </form>
-                  {memberLoading ? (
-                    <p>メンバー読み込み中...</p>
-                  ) : (
-                    <>
-                      {memberError ? (
-                        <p>{memberError}</p>
-                      ) : (
-                        <>
-                          {members.length === 0 ? (
-                            <p>メンバーが見つかりません。</p>
-                          ) : (
-                            <>
-                              <form onSubmit={handleUpdateAssignee}>
+                  <h1 className="text-2xl font-bold">タスク詳細</h1>
+
+                  <section className="space-y-4 rounded border p-5">
+                    <h2 className="text-lg font-semibold">基本情報</h2>
+                    <p>{task.title}</p>
+                    {!task.description ? (
+                      <p>説明なし</p>
+                    ) : (
+                      <p>{task.description}</p>
+                    )}
+                    <p>{task.status}</p>
+                    <p>
+                      作成日：
+                      {new Date(task.createdAt).toLocaleDateString("ja-JP")}
+                    </p>
+                  </section>
+
+                  <section className="space-y-4 rounded border p-5">
+                    <h2 className="text-lg font-semibold">タスク内容を編集</h2>
+                    <form onSubmit={handleUpdateTask} className="space-y-4">
+                      <div>
+                        <label className="block font-medium">
+                          タスクタイトル
+                        </label>
+                        <input
+                          type="text"
+                          id="editTitle"
+                          name="editTitle"
+                          className="w-full rounded border px-3 py-2"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-medium">説明文</label>
+                        <input
+                          type="text"
+                          id="editDescription"
+                          name="editDescription"
+                          className="w-full rounded border px-3 py-2"
+                          value={editDescription}
+                          onChange={(e) => setEditDescription(e.target.value)}
+                        />
+                      </div>
+                      {updateError && (
+                        <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
+                          {updateError}
+                        </p>
+                      )}
+                      {updateMessage && (
+                        <p className="rounded border border-green-300 bg-green-50 p-3 font-medium text-green-700">
+                          {updateMessage}
+                        </p>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={updating}
+                        className="rounded border px-4 py-2 disabled:opacity-50"
+                      >
+                        {updating ? "更新中" : "更新する"}
+                      </button>
+                    </form>
+                  </section>
+
+                  <section className="space-y-4 rounded border p-5">
+                    <h2 className="text-lg font-semibold">担当者を設定</h2>
+                    {memberLoading ? (
+                      <p className="rounded border p-3">
+                        メンバー読み込み中...
+                      </p>
+                    ) : (
+                      <>
+                        {memberError ? (
+                          <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
+                            {memberError}
+                          </p>
+                        ) : (
+                          <>
+                            {members.length === 0 ? (
+                              <p className="rounded border p-3">
+                                メンバーが見つかりません。
+                              </p>
+                            ) : (
+                              <form
+                                onSubmit={handleUpdateAssignee}
+                                className="space-y-4"
+                              >
                                 <div>
-                                  <label>担当者</label>
+                                  <label className="block font-medium">
+                                    担当者
+                                  </label>
                                   <select
                                     name="assigneeMember"
+                                    className="w-full rounded border px-3 py-2"
                                     value={selectedAssigneeProjectMemberId}
                                     onChange={(e) =>
                                       setSelectedAssigneeProjectMemberId(
@@ -431,52 +472,95 @@ export default function TaskDetailPage() {
                                   </select>
                                 </div>
 
-                                {assigneeError && <p>{assigneeError}</p>}
-                                {assigneeMessage && <p>{assigneeMessage}</p>}
+                                {assigneeError && (
+                                  <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
+                                    {assigneeError}
+                                  </p>
+                                )}
+                                {assigneeMessage && (
+                                  <p className="rounded border border-green-300 bg-green-50 p-3 font-medium text-green-700">
+                                    {assigneeMessage}
+                                  </p>
+                                )}
 
-                                <button type="submit" disabled={assigning}>
+                                <button
+                                  type="submit"
+                                  disabled={assigning}
+                                  className="rounded border px-4 py-2 disabled:opacity-50"
+                                >
                                   {assigning ? "設定中" : "担当者を設定する"}
                                 </button>
                               </form>
-                            </>
-                          )}
-                        </>
+                            )}
+                          </>
+                        )}
+                      </>
+                    )}
+                  </section>
+
+                  <section className="space-y-4 rounded border p-5">
+                    <h2 className="text-lg font-semibold">ステータスを更新</h2>
+                    <form onSubmit={handleUpdateStatus} className="space-y-4">
+                      <div>
+                        <label className="block font-medium">ステータス</label>
+                        <select
+                          name="status"
+                          className="w-full rounded border px-3 py-2"
+                          value={selectedStatus}
+                          onChange={(e) =>
+                            setSelectedStatus(e.target.value as Status)
+                          }
+                        >
+                          <option value="TODO">TODO</option>
+                          <option value="IN_PROGRESS">IN_PROGRESS</option>
+                          <option value="DONE">DONE</option>
+                        </select>
+                      </div>
+
+                      {statusError && (
+                        <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
+                          {statusError}
+                        </p>
                       )}
-                    </>
-                  )}
-                  <form onSubmit={handleUpdateStatus}>
-                    <div>
-                      <label>ステータス</label>
-                      <select
-                        name="status"
-                        value={selectedStatus}
-                        onChange={(e) =>
-                          setSelectedStatus(e.target.value as Status)
-                        }
+                      {statusMessage && (
+                        <p className="rounded border border-green-300 bg-green-50 p-3 font-medium text-green-700">
+                          {statusMessage}
+                        </p>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={updatingStatus}
+                        className="rounded border px-4 py-2 disabled:opacity-50"
                       >
-                        <option value="TODO">TODO</option>
-                        <option value="IN_PROGRESS">IN_PROGRESS</option>
-                        <option value="DONE">DONE</option>
-                      </select>
-                    </div>
+                        {updatingStatus ? "更新中" : "ステータスを更新する"}
+                      </button>
+                    </form>
+                  </section>
 
-                    {statusError && <p>{statusError}</p>}
-                    {statusMessage && <p>{statusMessage}</p>}
-
-                    <button type="submit" disabled={updatingStatus}>
-                      {updatingStatus ? "更新中" : "ステータスを更新する"}
+                  <section className="space-y-4 rounded border border-red-300 bg-red-50 p-5">
+                    <h2 className="text-lg font-semibold text-red-700">
+                      危険な操作
+                    </h2>
+                    {deleteError && (
+                      <p className="rounded border border-red-300 bg-white p-3 font-medium text-red-700">
+                        {deleteError}
+                      </p>
+                    )}
+                    <button
+                      onClick={deleteTask}
+                      disabled={deleting}
+                      className="rounded border border-red-600 px-4 py-2 font-medium text-red-700 disabled:opacity-50"
+                    >
+                      {deleting ? "削除中" : "タスクを削除する"}
                     </button>
-                  </form>
-                  {deleteError && <p>{deleteError}</p>}
-                  <button onClick={deleteTask} disabled={deleting}>
-                    {deleting ? "削除中" : "削除する"}
-                  </button>
+                  </section>
                 </>
               )}
             </>
           )}
         </>
       )}
-    </>
+    </main>
   );
 }
