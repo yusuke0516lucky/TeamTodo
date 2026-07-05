@@ -1,6 +1,7 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, type SubmitEventHandler } from "react";
+import Link from "next/link";
 
 type Task = {
   id: string;
@@ -357,6 +358,14 @@ export default function TaskDetailPage() {
                 <p className="rounded border p-4">タスクが見つかりません。</p>
               ) : (
                 <>
+                  {typeof projectId === "string" && (
+                    <Link
+                      href={`/projects/${projectId}`}
+                      className="inline-block text-sm underline"
+                    >
+                      ← プロジェクト詳細へ戻る
+                    </Link>
+                  )}
                   <h1 className="text-2xl font-bold">タスク詳細</h1>
 
                   <section className="space-y-4 rounded border p-5">
