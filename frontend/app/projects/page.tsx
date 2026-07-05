@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, Fragment, type SubmitEventHandler } from "react";
+import { useState, useEffect, type SubmitEventHandler } from "react";
 import Link from "next/link";
 type Project = {
   id: string;
@@ -96,75 +96,105 @@ export default function ProjectPage() {
   };
 
   return (
-    <>
-      <form onSubmit={handleCreateProject}>
-        <div>
-          <label>プロジェクトネーム</label>
-          <input
-            type="text"
-            id="projectName"
-            name="projectName"
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            required
-          />
-        </div>
+    <main className="mx-auto max-w-3xl space-y-6 px-6 py-8">
+      <h1 className="text-2xl font-bold">プロジェクト一覧</h1>
 
-        <div>
-          <label>説明文</label>
-          <input
-            type="text"
-            id="description"
-            name="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-        {createError && <p>{createError}</p>}
-        {createMessage && <p>{createMessage}</p>}
-        <button type="submit" disabled={creating}>
-          {creating ? "作成中..." : "作成する"}
-        </button>
-      </form>
-      {loading ? (
-        <p>読み込み中</p>
-      ) : (
-        <>
-          {error ? (
-            <p>{error}</p>
-          ) : (
-            <>
-              {projects.length === 0 ? (
-                <p>プロジェクトがありません。</p>
-              ) : (
-                <>
-                  {projects.map((project) => {
-                    return (
-                      <Fragment key={project.id}>
-                        <Link href={`/projects/${project.id}`}>
-                          {project.projectName}
-                        </Link>
-                        {!project.description ? (
-                          <p>説明なし</p>
-                        ) : (
-                          <p>{project.description}</p>
-                        )}
+      <section className="space-y-4 rounded border p-5">
+        <h2 className="text-lg font-semibold">プロジェクトを作成</h2>
+        <form onSubmit={handleCreateProject} className="space-y-4">
+          <div>
+            <label className="block font-medium">プロジェクトネーム</label>
+            <input
+              type="text"
+              id="projectName"
+              name="projectName"
+              className="w-full rounded border px-3 py-2"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              required
+            />
+          </div>
 
-                        <p>
-                          作成日：
-                          {new Date(project.createdAt).toLocaleDateString(
-                            "ja-JP",
-                          )}
-                        </p>
-                      </Fragment>
-                    );
-                  })}
-                </>
-              )}
-            </>
+          <div>
+            <label className="block font-medium">説明文</label>
+            <input
+              type="text"
+              id="description"
+              name="description"
+              className="w-full rounded border px-3 py-2"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+          {createError && (
+            <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
+              {createError}
+            </p>
           )}
-        </>
-      )}
-    </>
+          {createMessage && (
+            <p className="rounded border border-green-300 bg-green-50 p-3 font-medium text-green-700">
+              {createMessage}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={creating}
+            className="rounded border px-4 py-2 disabled:opacity-50"
+          >
+            {creating ? "作成中..." : "作成する"}
+          </button>
+        </form>
+      </section>
+
+      <section className="space-y-4 rounded border p-5">
+        <h2 className="text-lg font-semibold">プロジェクト</h2>
+        {loading ? (
+          <p className="rounded border p-3">読み込み中</p>
+        ) : (
+          <>
+            {error ? (
+              <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
+                {error}
+              </p>
+            ) : (
+              <>
+                {projects.length === 0 ? (
+                  <p className="rounded border p-3">
+                    プロジェクトがありません。
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {projects.map((project) => {
+                      return (
+                        <div key={project.id} className="rounded border p-3">
+                          <Link
+                            href={`/projects/${project.id}`}
+                            className="font-medium underline"
+                          >
+                            {project.projectName}
+                          </Link>
+                          {!project.description ? (
+                            <p>説明なし</p>
+                          ) : (
+                            <p>{project.description}</p>
+                          )}
+
+                          <p>
+                            作成日：
+                            {new Date(project.createdAt).toLocaleDateString(
+                              "ja-JP",
+                            )}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </section>
+    </main>
   );
 }
