@@ -42,48 +42,76 @@ export default function SignupPage() {
     await signup(username, email, password);
   };
   return (
-    <>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>ユーザーネーム</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
+    <main className="mx-auto max-w-md space-y-6 px-6 py-8">
+      <section className="space-y-4 rounded border p-5">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">サインアップ</h1>
+          <p>アカウントを作成して TeamTodo を利用します。</p>
         </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block font-medium">ユーザーネーム</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              className="w-full rounded border px-3 py-2"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
 
-        <div>
-          <label>メールアドレス</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
+          <div>
+            <label className="block font-medium">メールアドレス</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              className="w-full rounded border px-3 py-2"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-        <div>
-          <label>パスワード</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        {error && <p>{error}</p>}
-        {message && <p>{message}</p>}
-        <button type="submit">サインアップ</button>
-      </form>
-      <Link href="/login">ログイン</Link>
-    </>
+          <div>
+            <label className="block font-medium">パスワード</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              className="w-full rounded border px-3 py-2"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          {error && (
+            <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
+              {error}
+            </p>
+          )}
+          {message && (
+            <p className="rounded border border-green-300 bg-green-50 p-3 font-medium text-green-700">
+              {message}
+            </p>
+          )}
+          <button
+            type="submit"
+            className="rounded border px-4 py-2 disabled:opacity-50"
+          >
+            サインアップ
+          </button>
+        </form>
+      </section>
+
+      <p className="text-sm">
+        すでにアカウントをお持ちの方は
+        <Link href="/login" className="ml-1 underline">
+          ログイン
+        </Link>
+      </p>
+    </main>
   );
 }
