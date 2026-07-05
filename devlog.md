@@ -363,3 +363,18 @@
 ### Next
 
 - UI/エラー表示の最終調整
+
+## 2026-07-05
+
+### Output
+
+- Project 一覧画面 UI 調整
+- Project 詳細画面 UI 調整
+- Task 一覧画面 UI 調整
+- Task 詳細画面 UI 調整
+- Signup 画面 UI 調整
+- Login 画面 UI 調整
+
+### Key learning
+
+- 特になし
