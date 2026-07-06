@@ -26,6 +26,9 @@ export default function ProjectPage() {
   const [logoutError, setLogoutError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
 
+  //未ログイン用state
+  const [authRequired, setAuthRequired] = useState(false);
+
   const router = useRouter();
 
   //一覧取得メソッド
@@ -36,11 +39,16 @@ export default function ProjectPage() {
         credentials: "include",
       });
       const result = await response.json();
+      if (response.status === 401) {
+        setAuthRequired(true);
+        return;
+      }
       if (!response.ok) {
         setError(result.message);
         return;
       }
       setProjects(result.projects);
+      setAuthRequired(false);
       return;
     } catch {
       setError("通信に失敗しました。");
@@ -128,118 +136,144 @@ export default function ProjectPage() {
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-6 py-8">
-      <h1 className="text-2xl font-bold">プロジェクト一覧</h1>
-
-      <button
-        onClick={logout}
-        disabled={loggingOut}
-        className="rounded border px-4 py-2 disabled:opacity-50"
-      >
-        {loggingOut ? "ログアウト中..." : "ログアウト"}
-      </button>
-
-      {logoutError && (
-        <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
-          {logoutError}
-        </p>
-      )}
-
-      <section className="space-y-4 rounded border p-5">
-        <h2 className="text-lg font-semibold">プロジェクトを作成</h2>
-        <form onSubmit={handleCreateProject} className="space-y-4">
-          <div>
-            <label className="block font-medium">プロジェクトネーム</label>
-            <input
-              type="text"
-              id="projectName"
-              name="projectName"
-              className="w-full rounded border px-3 py-2"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium">説明文</label>
-            <input
-              type="text"
-              id="description"
-              name="description"
-              className="w-full rounded border px-3 py-2"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-          {createError && (
-            <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
-              {createError}
-            </p>
-          )}
-          {createMessage && (
-            <p className="rounded border border-green-300 bg-green-50 p-3 font-medium text-green-700">
-              {createMessage}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={creating}
-            className="rounded border px-4 py-2 disabled:opacity-50"
-          >
-            {creating ? "作成中..." : "作成する"}
-          </button>
-        </form>
-      </section>
-
-      <section className="space-y-4 rounded border p-5">
-        <h2 className="text-lg font-semibold">プロジェクト</h2>
-        {loading ? (
-          <p className="rounded border p-3">読み込み中</p>
-        ) : (
-          <>
-            {error ? (
-              <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
-                {error}
+      {loading ? (
+        <p className="rounded border p-4">読み込み中</p>
+      ) : (
+        <>
+          {authRequired ? (
+            <section className="space-y-4 rounded border border-red-300 bg-red-50 p-5">
+              <h1 className="text-2xl font-bold text-red-700">
+                ログインが必要です
+              </h1>
+              <p className="font-medium text-red-700">
+                プロジェクト一覧を表示するにはログインしてください。
               </p>
-            ) : (
-              <>
-                {projects.length === 0 ? (
-                  <p className="rounded border p-3">
-                    プロジェクトがありません。
+              <Link
+                href="/login"
+                className="inline-block rounded border border-red-300 bg-white px-4 py-2 font-medium text-red-700"
+              >
+                ログイン画面へ
+              </Link>
+            </section>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-4">
+                <h1 className="text-2xl font-bold">プロジェクト一覧</h1>
+
+                <button
+                  onClick={logout}
+                  disabled={loggingOut}
+                  className="rounded border px-4 py-2 disabled:opacity-50"
+                >
+                  {loggingOut ? "ログアウト中..." : "ログアウト"}
+                </button>
+              </div>
+
+              {logoutError && (
+                <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
+                  {logoutError}
+                </p>
+              )}
+
+              <section className="space-y-4 rounded border p-5">
+                <h2 className="text-lg font-semibold">プロジェクトを作成</h2>
+                <form onSubmit={handleCreateProject} className="space-y-4">
+                  <div>
+                    <label className="block font-medium">
+                      プロジェクトネーム
+                    </label>
+                    <input
+                      type="text"
+                      id="projectName"
+                      name="projectName"
+                      className="w-full rounded border px-3 py-2"
+                      value={projectName}
+                      onChange={(e) => setProjectName(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-medium">説明文</label>
+                    <input
+                      type="text"
+                      id="description"
+                      name="description"
+                      className="w-full rounded border px-3 py-2"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                    />
+                  </div>
+                  {createError && (
+                    <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
+                      {createError}
+                    </p>
+                  )}
+                  {createMessage && (
+                    <p className="rounded border border-green-300 bg-green-50 p-3 font-medium text-green-700">
+                      {createMessage}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={creating}
+                    className="rounded border px-4 py-2 disabled:opacity-50"
+                  >
+                    {creating ? "作成中..." : "作成する"}
+                  </button>
+                </form>
+              </section>
+
+              <section className="space-y-4 rounded border p-5">
+                <h2 className="text-lg font-semibold">プロジェクト</h2>
+                {error ? (
+                  <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
+                    {error}
                   </p>
                 ) : (
-                  <div className="space-y-3">
-                    {projects.map((project) => {
-                      return (
-                        <div key={project.id} className="rounded border p-3">
-                          <Link
-                            href={`/projects/${project.id}`}
-                            className="font-medium underline"
-                          >
-                            {project.projectName}
-                          </Link>
-                          {!project.description ? (
-                            <p>説明なし</p>
-                          ) : (
-                            <p>{project.description}</p>
-                          )}
+                  <>
+                    {projects.length === 0 ? (
+                      <p className="rounded border p-3">
+                        プロジェクトがありません。
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {projects.map((project) => {
+                          return (
+                            <div
+                              key={project.id}
+                              className="rounded border p-3"
+                            >
+                              <Link
+                                href={`/projects/${project.id}`}
+                                className="font-medium underline"
+                              >
+                                {project.projectName}
+                              </Link>
+                              {!project.description ? (
+                                <p>説明なし</p>
+                              ) : (
+                                <p>{project.description}</p>
+                              )}
 
-                          <p>
-                            作成日：
-                            {new Date(project.createdAt).toLocaleDateString(
-                              "ja-JP",
-                            )}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
+                              <p>
+                                作成日：
+                                {new Date(project.createdAt).toLocaleDateString(
+                                  "ja-JP",
+                                )}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </>
-        )}
-      </section>
+              </section>
+            </>
+          )}
+        </>
+      )}
     </main>
   );
 }
