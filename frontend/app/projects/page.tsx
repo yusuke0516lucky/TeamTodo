@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, type SubmitEventHandler } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 type Project = {
   id: string;
@@ -20,6 +21,12 @@ export default function ProjectPage() {
   const [createError, setCreateError] = useState(""); //POST /projects 用
   const [createMessage, setCreateMessage] = useState(""); //作成メッセージ
   const [creating, setCreating] = useState(false); //作成中フラグ
+
+  //ログアウト用state
+  const [logoutError, setLogoutError] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const router = useRouter();
 
   //一覧取得メソッド
   const getProjects = async () => {
@@ -95,9 +102,47 @@ export default function ProjectPage() {
     await createProject(projectName, description);
   };
 
+  const logout = async () => {
+    setLogoutError("");
+    setLoggingOut(true);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        setLogoutError(result.message);
+        return;
+      }
+      router.push("/login");
+      return;
+    } catch {
+      setLogoutError("通信に失敗しました。");
+      return;
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-6 py-8">
       <h1 className="text-2xl font-bold">プロジェクト一覧</h1>
+
+      <button
+        onClick={logout}
+        disabled={loggingOut}
+        className="rounded border px-4 py-2 disabled:opacity-50"
+      >
+        {loggingOut ? "ログアウト中..." : "ログアウト"}
+      </button>
+
+      {logoutError && (
+        <p className="rounded border border-red-300 bg-red-50 p-3 font-medium text-red-700">
+          {logoutError}
+        </p>
+      )}
 
       <section className="space-y-4 rounded border p-5">
         <h2 className="text-lg font-semibold">プロジェクトを作成</h2>
