@@ -79,10 +79,14 @@ if (!sessionSecret) {
 }
 
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT ?? 4000;
+const frontendOrigin = process.env.FRONTEND_ORIGIN ?? "http://localhost:3000";
+const isProduction = process.env.NODE_ENV === "production";
+
+app.set("trust proxy", 1);
 app.use(express.json());
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: frontendOrigin,
     credentials: true
 }));
 
@@ -96,8 +100,8 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        secure: false, 
-        sameSite: "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
     },
 }));
 
